@@ -115,6 +115,14 @@ bookingForm.addEventListener('submit', async function(e) {
     reason: formData.get('reason')
   };
   
+  // Log detalhado para debug
+  console.log('=== DEBUG AGENDAMENTO ===');
+  console.log('Data selecionada:', dateInput.value);
+  console.log('Horário selecionado:', selectedSlot.dataset.time);
+  console.log('DateTime completo:', selectedSlot.dataset.datetime);
+  console.log('Dados completos:', bookingData);
+  console.log('========================');
+  
   // Validar dados
   if (!validateBookingData(bookingData)) {
     return;
