@@ -155,35 +155,37 @@ async function submitBooking(bookingData) {
     submitBtn.disabled = true;
     showResult('Verificando disponibilidade e criando agendamento...', 'info');
     
-    // Primeiro, verificar se o e-mail está na blacklist
-    const verifyResponse = await fetch('/api/verify', {
+    // Enviar dados para o endpoint de agendamento
+    const response = await fetch('/api/booking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: bookingData.email })
+      body: JSON.stringify(bookingData)
     });
     
-    const verifyData = await verifyResponse.json();
+    const result = await response.json();
     
-    if (!verifyData.allowed) {
-      showResult(`E-mail não autorizado: ${verifyData.reason}`, 'error');
-      return;
+    if (response.ok && result.success) {
+      showResult('✅ Agendamento criado com sucesso! Você receberá uma confirmação por e-mail.', 'success');
+      
+      // Limpar formulário
+      bookingForm.reset();
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+      });
+      
+      // Adicionar horário agendado à lista de slots ocupados
+      BOOKED_SLOTS.push(bookingData.datetime);
+      
+      // Regenerar horários para mostrar o slot como ocupado
+      generateTimeSlots(dateInput.value);
+      
+    } else {
+      showResult(`Erro: ${result.reason || 'Não foi possível criar o agendamento'}`, 'error');
     }
-    
-    // Se aprovado, criar agendamento (simulado por enquanto)
-    // Depois será integrado com Make.com + Google Calendar
-    await simulateBookingCreation(bookingData);
-    
-    showResult('✅ Agendamento criado com sucesso! Você receberá uma confirmação por e-mail.', 'success');
-    
-    // Limpar formulário
-    bookingForm.reset();
-    document.querySelectorAll('.time-slot').forEach(slot => {
-      slot.classList.remove('selected');
-    });
     
   } catch (error) {
     console.error('Erro ao criar agendamento:', error);
-    showResult('Erro ao criar agendamento. Tente novamente.', 'error');
+    showResult('Erro de conexão. Tente novamente.', 'error');
   } finally {
     submitBtn.disabled = false;
   }
