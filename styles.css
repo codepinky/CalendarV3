@@ -90,3 +90,26 @@ button[disabled] { opacity: 0.6; cursor: not-allowed; }
   0% { width: 0%; }
   100% { width: 100%; }
 }
+
+/* Botão de Agendamento */
+.booking-link {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.booking-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary), #a855f7);
+  color: white;
+  text-decoration: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139,92,246,0.3);
+}
+
+.booking-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139,92,246,0.4);
+}

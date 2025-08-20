@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agendar Consulta</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/booking.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>📅 Agendar Consulta</h1>
+      <p class="subtitle">Escolha uma data e horário disponível para sua consulta</p>
+
+      <!-- Seleção de Data -->
+      <div class="date-selector">
+        <label for="date">Data da Consulta</label>
+        <input id="date" name="date" type="date" required min="" />
+      </div>
+
+      <!-- Seleção de Horário -->
+      <div class="time-selector">
+        <label>Horário Disponível</label>
+        <div class="time-slots" id="time-slots">
+          <!-- Horários serão gerados dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Formulário de Informações -->
+      <form id="booking-form" class="form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Nome Completo</label>
+            <input id="name" name="name" type="text" required />
+          </div>
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Telefone</label>
+            <input id="phone" name="phone" type="tel" required />
+          </div>
+          <div class="form-group">
+            <label for="duration">Duração</label>
+            <select id="duration" name="duration" required>
+              <option value="30">30 minutos</option>
+              <option value="60" selected>1 hora</option>
+              <option value="90">1h 30min</option>
+              <option value="120">2 horas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reason">Motivo da Consulta</label>
+          <textarea id="reason" name="reason" rows="3" placeholder="Descreva brevemente o motivo da sua consulta..." required></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn">Agendar Consulta</button>
+      </form>
+
+      <div id="result" class="result" aria-live="polite"></div>
+    </section>
+
+    <footer class="footer">
+      <small>© <span id="year"></span> — Sistema de Agendamento</small>
+    </footer>
+  </main>
+
+  <script src="/booking.js"></script>
+</body>
+</html>
