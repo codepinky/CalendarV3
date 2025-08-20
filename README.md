@@ -1,160 +1,115 @@
-# Verificação de Acesso - Cloudflare Pages
+# Agenda da Franjinha ❤
 
-Uma aplicação simples para verificação de acesso baseada em e-mail, construída com HTML, CSS, JavaScript e Cloudflare Pages Functions.
+Sistema de agendamento online com interface moderna e automação via Make (Integromat).
 
-## 🚀 Funcionalidades
+## ✨ Funcionalidades
 
-- **Interface moderna e responsiva** com design dark mode
-- **Validação de e-mail** em tempo real
-- **API endpoint** `/api/verify` para verificação
-- **Integração opcional** com Make.com para validação via Google Sheets
-- **Fallback mock** para testes iniciais
-- **CORS habilitado** para desenvolvimento local
+- **Interface Moderna**: Design responsivo com fonte Poppins e gradientes coloridos
+- **Seleção Inteligente**: Datas e horários disponíveis com visual atrativo
+- **Formulário Completo**: Coleta todas as informações necessárias do cliente
+- **Automação Make**: Integração automática com Google Calendar via Make
+- **Responsividade**: Funciona perfeitamente em todos os dispositivos
 
-## 📁 Estrutura do Projeto
+## 🚀 Configuração
 
-```
-repo/
-├─ index.html          # Página principal
-├─ styles.css          # Estilos CSS
-├─ scripts.js          # Lógica JavaScript
-├─ functions/          # Cloudflare Pages Functions
-│  └─ api/
-│     └─ verify.js     # Endpoint de verificação
-└─ README.md           # Este arquivo
-```
+### 1. Configurar o Make (Integromat)
 
-## 🛠️ Configuração
+1. Acesse [make.com](https://make.com)
+2. Crie um novo cenário
+3. Adicione um módulo **Webhook**
+4. Configure o webhook para receber dados POST
+5. Copie a URL do webhook
 
-### 1. Variáveis de Ambiente (Cloudflare Pages)
+### 2. Configurar a Aplicação
 
-No painel do Cloudflare Pages, vá em **Settings → Environment Variables** e configure:
+1. Abra o arquivo `config.js`
+2. Substitua `SEU_WEBHOOK_URL_AQUI` pela URL real do seu webhook:
 
-- `MAKE_VALIDATE_URL` (opcional) - URL do webhook do Make.com
-- `MAKE_API_KEY` (opcional) - Chave API para autenticação
-
-> **Nota**: Se `MAKE_VALIDATE_URL` não estiver configurado, o endpoint retornará `allowed: true` (mock) para facilitar testes.
-
-### 2. Deploy no Cloudflare Pages
-
-1. **Conecte o repositório**:
-   - Build command: (deixe vazio)
-   - Build output directory: (raiz do repo)
-   - Habilite **Pages Functions** (detecta automaticamente `/functions`)
-
-2. **Configure o domínio**:
-   - Use o domínio `.pages.dev` fornecido ou configure um domínio customizado
-
-## 🔧 Desenvolvimento Local
-
-### Testando a API
-
-```bash
-# Teste o endpoint de verificação
-curl -X POST http://localhost:8788/api/verify \
-  -H "Content-Type: application/json" \
-  -d '{"email":"teste@exemplo.com"}'
+```javascript
+MAKE_WEBHOOK_URL: 'https://hook.eu1.make.com/SEU_WEBHOOK_ID_AQUI'
 ```
 
-### Estrutura da Resposta da API
+### 3. Configurar o Google Calendar no Make
 
-```json
-{
-  "allowed": true,
-  "reason": "Acesso liberado"
-}
-```
+No seu cenário do Make, adicione:
 
-**Códigos de Status:**
-- `200` - Acesso permitido
-- `400` - E-mail inválido
-- `403` - Acesso negado
-- `502` - Erro no upstream (Make.com)
+1. **Módulo Google Calendar** → **Create an Event**
+2. Configure a conexão com sua conta Google
+3. Mapeie os campos:
+   - **Summary**: `{{clientName}} - Encontro`
+   - **Start Date**: `{{date}} {{time}}`
+   - **End Date**: `{{date}} {{time}}` + 1 hora
+   - **Description**: Dados do cliente e observações
 
-## 🔗 Integração com Make.com
+## 📱 Como Usar
 
-### Cenário de Uso
-
-1. **Trigger**: Custom Webhook recebe `{ email }`
-2. **Validação**: Busca no Google Sheets (aba `allowlist`)
-3. **Resposta**: Retorna `{ allowed: boolean, reason?: string }`
-
-### Exemplo de Fluxo no Make
-
-```
-Webhook → Parse JSON → Google Sheets Search → Router → Webhook Response
-```
+1. Cliente acessa a página
+2. Seleciona data e horário disponível
+3. Preenche formulário com dados pessoais
+4. Sistema envia dados para o Make
+5. Make cria evento no Google Calendar
+6. Cliente recebe confirmação
 
 ## 🎨 Personalização
 
-### Cores e Estilo
+### Cores e Estilos
+- Edite `booking.css` para personalizar cores e estilos
+- O título principal usa gradiente animado com 5 cores
 
-Edite as variáveis CSS em `styles.css`:
+### Horários de Trabalho
+- Configure em `config.js`:
+  - `start`: Hora de início (13.5 = 13:30)
+  - `end`: Hora de fim (21.5 = 21:30)
+  - `interval`: Intervalo entre encontros
+  - `duration`: Duração de cada encontro
 
-```css
-:root {
-  --primary: #8b5cf6;    /* Cor principal */
-  --bg: #0f0f13;        /* Fundo */
-  --card: #16161d;       /* Card */
-  --text: #e8e8f0;      /* Texto */
+### Validações
+- Idade mínima: 18 anos
+- Formato de telefone: (11) 99999-9999
+- Email válido obrigatório
+
+## 🔧 Estrutura dos Dados
+
+O sistema envia para o Make:
+
+```json
+{
+  "date": "2024-01-15",
+  "time": "14:30 - 15:30",
+  "clientName": "Nome do Cliente",
+  "clientEmail": "cliente@email.com",
+  "clientPhone": "(11) 99999-9999",
+  "clientAge": "25",
+  "clientCity": "São Paulo",
+  "clientState": "SP",
+  "clientNotes": "Observações do cliente",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "source": "Agenda Online"
 }
 ```
 
-### Mensagens
+## 📁 Arquivos
 
-Personalize as mensagens em `scripts.js` e `functions/api/verify.js`.
+- `booking.html` - Estrutura da página
+- `booking.css` - Estilos e responsividade
+- `booking.js` - Lógica de agendamento
+- `config.js` - Configurações da aplicação
+- `main.js` - Funcionalidades gerais
 
-## 📱 Responsividade
+## 🌐 Deploy
 
-A interface é totalmente responsiva e funciona em:
-- Desktop (≥768px)
-- Tablet (≥480px)
-- Mobile (<480px)
+1. Faça upload dos arquivos para seu servidor
+2. Configure o webhook no Make
+3. Teste o agendamento
+4. Verifique se o evento foi criado no Google Calendar
 
-## 🚀 Deploy Rápido
+## 🆘 Suporte
 
-```bash
-# 1. Inicializar repositório
-git init
-git add .
-git commit -m "feat: verificação de acesso com Cloudflare Pages"
-
-# 2. Conectar ao GitHub
-git branch -M main
-git remote add origin https://github.com/<usuario>/<repo>.git
-git push -u origin main
-
-# 3. Deploy no Cloudflare Pages
-# - Conecte o repositório
-# - Habilite Pages Functions
-# - Configure variáveis de ambiente (opcional)
-```
-
-## 🔒 Segurança
-
-- Validação de entrada no servidor
-- Headers CORS configurados
-- Rate limiting automático do Cloudflare
-- Sanitização de dados
-
-## 📊 Monitoramento
-
-- **Cloudflare Analytics** integrado
-- **Logs** disponíveis no painel do Cloudflare
-- **Métricas** de performance automáticas
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+Para dúvidas ou problemas:
+- Verifique o console do navegador para erros
+- Confirme se a URL do webhook está correta
+- Teste a conexão do Make com Google Calendar
 
 ---
 
-**Desenvolvido com ❤️ para Cloudflare Pages**
+**Desenvolvido com ❤ para a Agenda da Franjinha**

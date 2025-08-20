@@ -1,12 +1,7 @@
 // JavaScript para a página de agendamento
 
-// Configurações dos horários de trabalho
-const WORKING_HOURS = {
-  start: 13.5, // 13:30
-  end: 21.5,   // 21:30
-  interval: 2, // 2 horas entre encontros (1h encontro + 1h intervalo)
-  duration: 1  // 1 hora de duração
-};
+// Usar configurações do arquivo config.js
+const WORKING_HOURS = CONFIG.WORKING_HOURS;
 
 // Função para gerar as próximas datas disponíveis (8 dias)
 function generateAvailableDates() {
@@ -14,8 +9,8 @@ function generateAvailableDates() {
   const today = new Date();
   const availableDates = [];
   
-  // Gerar os próximos 8 dias
-  for (let i = 0; i < 8; i++) {
+  // Gerar as próximas datas disponíveis
+  for (let i = 0; i < CONFIG.UI.maxDates; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
     
@@ -64,7 +59,9 @@ function generateAvailableDates() {
       // Selecionar esta data
       dateSlot.classList.add('selected');
       // Atualizar campo hidden
-      document.getElementById('date').value = date;
+      document.getElementById('meeting-date').value = date;
+      console.log('Data selecionada:', date);
+      console.log('Campo date após atualização:', document.getElementById('meeting-date').value);
       // Gerar horários para esta data
       generateTimeSlots();
     });
@@ -74,15 +71,25 @@ function generateAvailableDates() {
     // Selecionar a primeira data por padrão
     if (index === 0) {
       dateSlot.classList.add('selected');
-      document.getElementById('date').value = date;
+      document.getElementById('meeting-date').value = date;
+      console.log('Data padrão selecionada:', date);
     }
   });
+}
+
+// Função para calcular o horário de fim (1 hora depois)
+function getEndTime(startTime) {
+  const [hour, minute] = startTime.split(':').map(Number);
+  const endHour = hour + 1;
+  return `${endHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 }
 
 // Função para gerar os horários disponíveis
 function generateTimeSlots() {
   const timeSlotsContainer = document.querySelector('.time-slots');
-  const selectedDate = document.getElementById('date').value;
+  const selectedDate = document.getElementById('meeting-date').value;
+  
+  console.log('generateTimeSlots - Data selecionada:', selectedDate);
   
   if (!selectedDate) return;
   
@@ -130,8 +137,9 @@ function generateTimeSlots() {
       document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
       // Selecionar este horário
       timeSlot.classList.add('selected');
-      // Atualizar campo hidden
-      document.getElementById('time').value = slot.value;
+      // Atualizar campo hidden com apenas o horário de início
+      document.getElementById('meeting-time').value = slot.start;
+      console.log('Horário selecionado:', slot.start);
     });
     
     timeSlotsContainer.appendChild(timeSlot);
@@ -139,23 +147,127 @@ function generateTimeSlots() {
 }
 
 // Função para lidar com o envio do formulário
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault();
   
-  const formData = new FormData(event.target);
-  const data = Object.fromEntries(formData);
+  const submitBtn = document.getElementById('submit-btn');
+  const originalText = submitBtn.textContent;
   
-  // Validações básicas
-  if (!data.date || !data.time || !data.name || !data.email || !data.phone) {
-    alert('Por favor, preencha todos os campos obrigatórios.');
-    return;
+  try {
+    // Desabilitar botão e mostrar loading
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+    
+    // Debug: verificar campos hidden antes do FormData
+    console.log('Campo date antes do FormData:', document.getElementById('meeting-date').value);
+    console.log('Campo time antes do FormData:', document.getElementById('meeting-time').value);
+    
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData);
+    
+    // Debug: ver o que está sendo capturado
+    console.log('Dados capturados do formulário:', data);
+    console.log('Data selecionada:', data['meeting-date']);
+    console.log('Horário selecionado:', data['meeting-time']);
+    console.log('Nome:', data.name);
+    console.log('Email:', data.email);
+    console.log('Telefone:', data.phone);
+    
+    // Validações básicas
+    if (!data['meeting-date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
+      console.log('Campos faltando:');
+      if (!data['meeting-date']) console.log('- Data não selecionada');
+      if (!data['meeting-time']) console.log('- Horário não selecionado');
+      if (!data.name) console.log('- Nome não preenchido');
+      if (!data.email) console.log('- Email não preenchido');
+      if (!data.phone) console.log('- Telefone não preenchido');
+      throw new Error('Por favor, preencha todos os campos obrigatórios.');
+    }
+    
+    // Formatar dados para o Make (formato que a API espera)
+    const makeData = {
+      date: data['meeting-date'],
+      time: data['meeting-time'],
+      datetime: `${data['meeting-date']}T${data['meeting-time']}:00`,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      age: data.age || '',
+      city: data.city || '',
+      state: data.state || '',
+      reason: data.reason || 'Agendamento via site',
+      duration: 60,
+      timestamp: new Date().toISOString(),
+      source: 'Agenda Online'
+    };
+    
+    // Enviar para a API local que gerencia o Make
+    const response = await fetch('/api/booking', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(makeData)
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok || !result.success) {
+      throw new Error(result.reason || 'Erro ao enviar agendamento. Tente novamente.');
+    }
+    
+    // Sucesso!
+    showResult('success', result.message || 'Agendamento enviado com sucesso! Entraremos em contato para confirmar.');
+    
+    // Limpar formulário
+    event.target.reset();
+    
+    // Resetar seleções visuais
+    document.querySelectorAll('.date-slot.selected, .time-slot.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    
+    // Selecionar primeira data novamente
+    const firstDateSlot = document.querySelector('.date-slot');
+    if (firstDateSlot) {
+      firstDateSlot.classList.add('selected');
+      document.getElementById('meeting-date').value = firstDateSlot.dataset.date;
+      generateTimeSlots();
+    }
+    
+  } catch (error) {
+    console.error('Erro no agendamento:', error);
+    showResult('error', error.message);
+  } finally {
+    // Restaurar botão
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
+
+// Função para mostrar resultados
+function showResult(type, message) {
+  // Remover resultado anterior
+  const existingResult = document.querySelector('.result');
+  if (existingResult) {
+    existingResult.remove();
   }
   
-  // Aqui você pode adicionar a lógica para enviar os dados
-  console.log('Dados do agendamento:', data);
+  // Criar novo resultado
+  const resultDiv = document.createElement('div');
+  resultDiv.className = `result ${type}`;
+  resultDiv.textContent = message;
   
-  // Exemplo de sucesso
-  alert('Agendamento realizado com sucesso! Entraremos em contato para confirmar.');
+  // Inserir após o botão
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.parentNode.insertBefore(resultDiv, submitBtn.nextSibling);
+  
+  // Auto-remover após o tempo configurado
+  setTimeout(() => {
+    if (resultDiv.parentNode) {
+      resultDiv.remove();
+    }
+  }, CONFIG.UI.resultTimeout);
 }
 
 // Inicialização quando a página carregar
@@ -164,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
   generateAvailableDates();
   
   // Adicionar evento para mudança de data
-  document.getElementById('date').addEventListener('change', generateTimeSlots);
+  document.getElementById('meeting-date').addEventListener('change', generateTimeSlots);
   
   // Adicionar evento para envio do formulário
   document.getElementById('booking-form').addEventListener('submit', handleSubmit);
