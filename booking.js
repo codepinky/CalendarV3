@@ -289,8 +289,32 @@ document.addEventListener('DOMContentLoaded', function() {
   const nextBtn = document.getElementById('next-btn');
   const navInfo = document.getElementById('nav-info');
   
+  // Botão Voltar ao Topo
+  const backToTopBtn = document.getElementById('back-to-top');
+  
   const sections = ['regras', 'como-funciona', 'precos', 'pos-agendar'];
   let currentSectionIndex = 0;
+  
+  // Função para mostrar/ocultar botão voltar ao topo
+  function toggleBackToTop() {
+    if (window.pageYOffset > 300) {
+      backToTopBtn.classList.add('visible');
+    } else {
+      backToTopBtn.classList.remove('visible');
+    }
+  }
+  
+  // Função para voltar ao topo
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+  
+  // Event listeners para o botão voltar ao topo
+  window.addEventListener('scroll', toggleBackToTop);
+  backToTopBtn.addEventListener('click', scrollToTop);
   
   // Inicializar primeira seção
   navigateToSection(sections[0]);

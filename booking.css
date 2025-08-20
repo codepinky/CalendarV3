@@ -23,7 +23,7 @@ body {
   background-repeat: repeat;
   color: #ffffff;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.4;
   min-height: 100vh;
   position: relative;
   font-weight: 400;
@@ -50,20 +50,20 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px;
+  padding: 16px;
   background: transparent;
 }
 
 /* Header Inteligente com Badges */
 .smart-header {
-  width: 55vw;
-  max-width: none;
-  margin: 24px auto 40px auto;
-  padding: 32px 0;
+  width: 100%;
+  max-width: 500px;
+  margin: 16px auto 24px auto;
+  padding: 20px 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
   position: relative;
   background: linear-gradient(135deg, rgba(159, 122, 234, 0.1) 0%, rgba(246, 135, 179, 0.1) 100%);
@@ -83,15 +83,15 @@ body::before {
 }
 
 .info-badge {
-  padding: 16px 28px;
+  padding: 12px 20px;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.15) 0%, 
     rgba(255, 255, 255, 0.10) 50%, 
     rgba(255, 255, 255, 0.15) 100%);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 28px;
+  border-radius: 20px;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -130,17 +130,17 @@ body::before {
 
 /* Card principal */
 .card {
-  width: 55vw;
-  max-width: none;
+  width: 100%;
+  max-width: 500px;
   background: linear-gradient(135deg, 
     rgba(0, 0, 0, 0.75) 0%, 
     rgba(20, 20, 30, 0.80) 50%, 
     rgba(0, 0, 0, 0.75) 100%);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 64px;
+  border-radius: 16px;
+  padding: 32px 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
@@ -155,13 +155,13 @@ body::before {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #9f7aea, #f687b3, #f6ad55);
-  border-radius: 20px 20px 0 0;
+  border-radius: 16px 16px 0 0;
 }
 
 /* Títulos */
 h1 { 
-  margin: 0 0 32px; 
-  font-size: 36px; 
+  margin: 0 0 24px; 
+  font-size: 28px; 
   font-weight: 800;
   text-align: center;
   line-height: 1.1;
@@ -178,13 +178,13 @@ h1 {
 
 /* Seleção de Data */
 .date-selector {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .date-selector label {
   display: block;
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 13px;
   color: #ffffff;
   font-weight: 700;
   text-transform: uppercase;
@@ -194,29 +194,29 @@ h1 {
 
 .date-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
   max-width: 100%;
 }
 
 .date-slot {
-  padding: 16px 20px;
+  padding: 14px 16px;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.1) 0%, 
     rgba(255, 255, 255, 0.05) 100%);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 14px;
+  border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
-  min-height: 65px;
+  min-height: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   position: relative;
   overflow: hidden;
   color: #ffffff;
@@ -236,7 +236,7 @@ h1 {
   background: linear-gradient(90deg, #9f7aea, #f687b3, #f6ad55);
   transform: scaleX(0);
   transition: transform 0.3s ease;
-  border-radius: 16px 16px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .date-slot:hover {
@@ -244,10 +244,10 @@ h1 {
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.15) 0%, 
     rgba(255, 255, 255, 0.10) 100%);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(159, 122, 234, 0.25),
-    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(159, 122, 234, 0.25),
+    0 3px 12px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
@@ -256,7 +256,7 @@ h1 {
 }
 
 .date-day {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -264,7 +264,7 @@ h1 {
 }
 
 .date-month {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
   text-transform: uppercase;
@@ -272,7 +272,7 @@ h1 {
 }
 
 .date-weekday {
-  font-size: 10px;
+  font-size: 9px;
   color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -298,13 +298,13 @@ h1 {
 
 /* Seleção de Horário */
 .time-selector {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .time-selector label {
   display: block;
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 13px;
   color: #ffffff;
   font-weight: 700;
   text-transform: uppercase;
@@ -314,29 +314,29 @@ h1 {
 
 .time-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
   max-width: 100%;
 }
 
 .time-slot {
-  padding: 16px 20px;
+  padding: 14px 16px;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.1) 0%, 
     rgba(255, 255, 255, 0.05) 100%);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 14px;
+  border-radius: 12px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
-  min-height: 70px;
+  min-height: 65px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   position: relative;
   overflow: hidden;
   color: #ffffff;
@@ -356,7 +356,7 @@ h1 {
   background: linear-gradient(90deg, #9f7aea, #f687b3, #f6ad55);
   transform: scaleX(0);
   transition: transform 0.3s ease;
-  border-radius: 14px 14px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .time-slot:hover {
@@ -364,20 +364,20 @@ h1 {
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.15) 0%, 
     rgba(255, 255, 255, 0.10) 100%);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 
-    0 8px 25px rgba(159, 122, 234, 0.25),
-    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(159, 122, 234, 0.25),
+    0 3px 12px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .time-slot:hover::before {
   transform: scaleX(1);
-  border-radius: 14px 14px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .time-start {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -385,21 +385,21 @@ h1 {
 }
 
 .time-duration {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .time-available {
-  font-size: 9px;
+  font-size: 8px;
   color: #68d391;
   font-weight: 600;
   text-transform: uppercase;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   background: rgba(104, 211, 145, 0.15);
   padding: 2px 6px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid rgba(104, 211, 145, 0.3);
 }
 
@@ -423,20 +423,20 @@ h1 {
 
 /* Formulário */
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
   color: #ffffff;
   font-weight: 700;
   text-transform: uppercase;
@@ -452,9 +452,9 @@ h1 {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   border-radius: 8px;
-  padding: 16px 20px;
+  padding: 14px 16px;
   outline: none;
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -472,13 +472,13 @@ h1 {
 .form-group textarea:focus {
   border-color: #9f7aea;
   border-width: 3px;
-  padding: 15px 19px;
+  padding: 13px 15px;
   background: rgba(255, 255, 255, 0.3);
 }
 
 .form-group textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 70px;
 }
 
 .form-group select {
@@ -492,13 +492,14 @@ h1 {
 
 /* Botão de Agendamento */
 #submit-btn {
-  width: 30%;
-  margin: 24px auto 0 auto;
+  width: 100%;
+  max-width: 300px;
+  margin: 20px auto 0 auto;
   background: linear-gradient(135deg, #9f7aea, #f687b3);
   border: 0;
   color: white;
   border-radius: 10px;
-  padding: 16px 32px;
+  padding: 16px 24px;
   font-weight: 600;
   font-size: 16px;
   cursor: pointer;
@@ -522,7 +523,7 @@ h1 {
 /* Resultado */
 .result {
   min-height: 40px;
-  margin-top: 24px;
+  margin-top: 20px;
   font-weight: 400;
   text-align: center;
   padding: 12px 16px;
@@ -555,22 +556,65 @@ h1 {
 
 /* Footer Inteligente */
 .smart-footer {
-  width: 55vw;
-  max-width: none;
-  margin: 40px auto 0 auto;
+  width: 100%;
+  max-width: 500px;
+  margin: 24px auto 0 auto;
   background: linear-gradient(135deg, 
     rgba(0, 0, 0, 0.75) 0%, 
     rgba(20, 20, 30, 0.80) 50%, 
     rgba(0, 0, 0, 0.75) 100%);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
   backdrop-filter: blur(10px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
+/* Botão Voltar ao Topo */
+.back-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #9f7aea, #f687b3);
+  border: 0;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(159, 122, 234, 0.4);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(159, 122, 234, 0.6);
+}
+
+.back-to-top.visible {
+  display: flex;
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .footer-toggle {
-  padding: 20px;
+  padding: 16px;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -579,8 +623,8 @@ h1 {
   background: linear-gradient(135deg, #9f7aea, #f687b3);
   border: 0;
   color: white;
-  padding: 12px 24px;
-  border-radius: 25px;
+  padding: 12px 20px;
+  border-radius: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -594,7 +638,7 @@ h1 {
 
 .footer-content {
   display: none;
-  padding: 32px;
+  padding: 24px;
 }
 
 .footer-content.active {
@@ -612,15 +656,15 @@ h1 {
 
 .footer-section h3 {
   color: #ffffff;
-  font-size: 20px;
-  margin-bottom: 16px;
+  font-size: 18px;
+  margin-bottom: 12px;
   font-weight: 600;
 }
 
 .footer-section p {
   color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 16px;
-  line-height: 1.6;
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 
 .footer-section ul {
@@ -630,8 +674,8 @@ h1 {
 
 .footer-section li {
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 8px;
-  padding-left: 20px;
+  margin-bottom: 6px;
+  padding-left: 16px;
   position: relative;
 }
 
@@ -647,9 +691,9 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
-  margin-top: 32px;
-  padding-top: 24px;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -657,13 +701,13 @@ h1 {
   background: linear-gradient(135deg, #9f7aea, #f687b3);
   border: 0;
   color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
+  padding: 10px 18px;
+  border-radius: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .nav-btn:hover:not(:disabled) {
@@ -679,12 +723,12 @@ h1 {
 
 .nav-info {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .footer {
-  padding: 20px;
+  padding: 16px;
   text-align: center;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.3);
@@ -692,7 +736,7 @@ h1 {
 
 .footer small {
   color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 @keyframes fadeIn {
@@ -718,195 +762,135 @@ h1 {
   }
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
+/* Responsividade - Mobile First */
+@media (max-width: 767px) {
+  .back-to-top {
+    bottom: 16px;
+    right: 16px;
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 768px) {
   .container {
-    padding: 16px;
+    padding: 24px;
   }
   
   .card {
-    padding: 32px 24px;
-    border-radius: 16px;
+    padding: 48px 40px;
+    border-radius: 20px;
   }
   
   h1 {
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 36px;
+    margin-bottom: 32px;
   }
   
-
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  
+  .form-group {
+    margin-bottom: 24px;
+  }
+  
+  .form-group label {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 16px 20px;
+    font-size: 14px;
+  }
   
   #submit-btn {
-    width: 60%;
-    padding: 14px 24px;
-    font-size: 15px;
-  }
-  
-  .time-slots {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-  }
-  
-  .time-slot {
-    padding: 14px 16px;
-    font-size: 13px;
-    min-height: 70px;
-    border-radius: 12px;
-  }
-  
-  .time-start {
+    width: 40%;
+    padding: 18px 32px;
     font-size: 16px;
   }
   
-  .time-duration {
-    font-size: 10px;
-  }
-  
-  .time-available {
-    font-size: 8px;
-  }
-  
   .date-slots {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 12px;
   }
   
   .date-slot {
     padding: 16px 20px;
+    min-height: 65px;
+  }
+  
+  .time-slots {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+  }
+  
+  .time-slot {
+    padding: 16px 20px;
     min-height: 70px;
-    border-radius: 12px;
-  }
-  
-  .date-day {
-    font-size: 20px;
-  }
-  
-  .date-month {
-    font-size: 12px;
-  }
-  
-  .date-weekday {
-    font-size: 11px;
   }
   
   .smart-header {
-    gap: 16px;
-    padding: 24px 0;
-    margin-bottom: 32px;
-    margin-top: 16px;
+    width: 80%;
+    max-width: 800px;
+    padding: 32px 0;
+    margin: 24px auto 40px auto;
+    gap: 24px;
   }
   
   .info-badge {
-    padding: 14px 24px;
-    font-size: 14px;
-    border-radius: 24px;
+    padding: 16px 28px;
+    font-size: 15px;
   }
   
   .smart-footer {
-    margin: 32px auto 0 auto;
+    width: 80%;
+    max-width: 800px;
+    margin: 40px auto 0 auto;
   }
   
   .footer-content {
-    padding: 24px 20px;
+    padding: 32px;
   }
   
   .footer-section h3 {
-    font-size: 18px;
+    font-size: 20px;
+    margin-bottom: 16px;
   }
   
   .footer-navigation {
-    flex-direction: column;
-    gap: 16px;
+    gap: 20px;
+    margin-top: 32px;
+    padding-top: 24px;
   }
   
   .nav-btn {
-    width: 100%;
-    max-width: 200px;
+    padding: 12px 24px;
+    font-size: 14px;
   }
 }
 
-@media (max-width: 480px) {
+@media (min-width: 1024px) {
   .card {
-    padding: 24px 20px;
-  }
-  
-  #submit-btn {
-    width: 80%;
-    padding: 12px 20px;
-    font-size: 14px;
-  }
-  
-  .date-slots {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 10px;
-  }
-  
-  .date-slot {
-    padding: 14px 16px;
-    min-height: 60px;
-    border-radius: 10px;
-  }
-  
-  .date-day {
-    font-size: 18px;
-  }
-  
-  .date-month {
-    font-size: 11px;
-  }
-  
-  .date-weekday {
-    font-size: 10px;
+    padding: 64px;
   }
   
   h1 {
-    font-size: 24px;
-    font-weight: 700;
-  }
-  
-
-  
-  .time-slot {
-    padding: 12px 16px;
-    min-height: 60px;
-    border-radius: 10px;
-  }
-  
-  .time-start {
-    font-size: 14px;
-  }
-  
-  .time-duration {
-    font-size: 9px;
-  }
-  
-  .time-available {
-    font-size: 7px;
+    font-size: 42px;
   }
   
   .smart-header {
-    gap: 12px;
-    padding: 20px 0;
-    margin-bottom: 24px;
-    margin-top: 12px;
+    width: 70%;
+    max-width: 1000px;
   }
   
-  .info-badge {
-    padding: 12px 20px;
-    font-size: 13px;
-    border-radius: 20px;
-  }
-  
-  .footer-content {
-    padding: 20px 16px;
-  }
-  
-  .footer-section h3 {
-    font-size: 16px;
-  }
-  
-  .footer-toggle-btn {
-    padding: 10px 20px;
-    font-size: 14px;
+  .smart-footer {
+    width: 70%;
+    max-width: 1000px;
   }
 }
