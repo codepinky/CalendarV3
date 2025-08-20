@@ -24,8 +24,19 @@ form.addEventListener('submit', async (e) => {
     const data = await res.json().catch(() => ({}));
 
     if (res.ok && data.allowed) {
-      result.textContent = 'Acesso liberado. ✅';
+      result.textContent = 'Acesso liberado. Redirecionando para o Google Calendar... ✅';
       result.classList.add('ok');
+      
+      // Criar e mostrar barra de progresso
+      const progressBar = document.createElement('div');
+      progressBar.className = 'progress-bar';
+      progressBar.innerHTML = '<div class="progress-fill"></div>';
+      result.appendChild(progressBar);
+      
+      // Redirecionar para o Google Calendar específico após 3 segundos
+      setTimeout(() => {
+        window.location.href = 'https://calendar.app.google/J1oNY2yKwf7aNVGD6';
+      }, 3000);
     } else {
       const reason = data?.reason || 'Acesso negado.';
       result.textContent = `${reason} ❌`;
