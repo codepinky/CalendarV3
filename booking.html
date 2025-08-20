@@ -3,73 +3,165 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agendar Consulta</title>
-  <link rel="stylesheet" href="/main.css" />
+  <title>Agenda da Franjinha ❤</title>
   <link rel="stylesheet" href="/booking.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="booking-page">
   <main class="container">
-    <section class="card">
-      <h1>📅 Agendar Consulta</h1>
-      <p class="subtitle">Escolha uma data e horário disponível para sua consulta</p>
+    <!-- Header Inteligente -->
+    <div class="smart-header">
+      <div class="info-badge" data-section="regras">
+        📋 Regras
+        
+      </div>
+      <div class="info-badge" data-section="como-funciona">
+        ⚡ Como Funciona
+        
+      </div>
+      <div class="info-badge" data-section="precos">
+        💰 Preços
+        
+      </div>
+      <div class="info-badge" data-section="pos-agendar">
+        ✅ Após Agendar
+        
+      </div>
+    </div>
 
-      <!-- Seleção de Data -->
-      <div class="date-selector">
-        <label for="date">Data da Consulta</label>
-        <input id="date" name="date" type="date" required min="" />
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+      <section class="card">
+        <h1>Agenda da Franjinha ❤</h1>
+
+        <!-- Seleção de Data -->
+        <div class="date-selector">
+          <label for="date">Data do Encontro</label>
+          <div class="date-slots" id="date-slots">
+            <!-- Datas serão geradas dinamicamente -->
+          </div>
+          <input type="hidden" id="date" name="date" required>
+        </div>
+
+        <!-- Seleção de Horário -->
+        <div class="time-selector">
+          <label>Horário Disponível</label>
+          <div class="time-slots" id="time-slots">
+            <!-- Horários serão gerados dinamicamente -->
+          </div>
+          <input type="hidden" id="time" name="time" required>
+        </div>
+
+        <!-- Formulário de Informações -->
+        <form id="booking-form" class="form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Nome Completo</label>
+              <input id="name" name="name" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="email">E-mail</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Telefone</label>
+              <input id="phone" name="phone" type="tel" required />
+            </div>
+            <div class="form-group">
+              <label for="duration">Duração</label>
+              <select id="duration" name="duration" required>
+                <option value="60" selected>1 hora</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reason">Motivo do Encontro</label>
+            <textarea id="reason" name="reason" rows="3" placeholder="Descreva brevemente o motivo do seu encontro..." required></textarea>
+          </div>
+
+          <button type="submit" id="submit-btn">Agendar Encontro</button>
+        </form>
+
+      </section>
+    </div>
+
+    <!-- Footer Expandido Inteligente -->
+    <div class="smart-footer">
+      <div class="footer-toggle">
+        <button class="footer-toggle-btn" id="footer-toggle">
+          📚 Ver Informações Adicionais
+        </button>
+      </div>
+      
+      <div class="footer-content" id="footer-content">
+        <div class="footer-section active" id="regras">
+          <h3>📋 Regras de Agendamento</h3>
+          <p>Para garantir uma experiência agradável para todos:</p>
+          <ul>
+            <li>Agendamentos devem ser feitos com pelo menos 24h de antecedência</li>
+            <li>Em caso de cancelamento, avise com 12h de antecedência</li>
+            <li>Chegue 10 minutos antes do horário marcado</li>
+            <li>Traga documentos necessários para o encontro</li>
+          </ul>
+        </div>
+
+        <div class="footer-section" id="como-funciona">
+          <h3>⚡ Como Funciona o Agendamento</h3>
+          <p>O processo é simples e rápido:</p>
+          <ul>
+            <li>1. Verifique seu acesso com seu e-mail</li>
+            <li>2. Escolha uma data e horário disponível</li>
+            <li>3. Preencha suas informações pessoais</li>
+            <li>4. Confirme o agendamento</li>
+            <li>5. Receba confirmação por e-mail</li>
+          </ul>
+        </div>
+
+        <div class="footer-section" id="precos">
+          <h3>💰 Preços e Pacotes</h3>
+          <p>Oferecemos diferentes opções para atender suas necessidades:</p>
+          <ul>
+            <li>Encontro Individual: R$ 150,00</li>
+            <li>Pacote 3 Encontros: R$ 400,00 (economia de R$ 50,00)</li>
+            <li>Pacote 5 Encontros: R$ 650,00 (economia de R$ 100,00)</li>
+            <li>Primeiro Encontro: R$ 120,00 (desconto especial)</li>
+          </ul>
+        </div>
+
+        <div class="footer-section" id="pos-agendar">
+          <h3>✅ Após o Agendamento</h3>
+          <p>O que acontece depois que você agenda:</p>
+          <ul>
+            <li>Receberá confirmação por e-mail em até 1 hora</li>
+            <li>Lembrete 24h antes do encontro</li>
+            <li>Lembrete 2h antes do encontro</li>
+            <li>Confirmação por WhatsApp</li>
+            <li>Instruções específicas para seu encontro</li>
+          </ul>
+        </div>
+
+        <!-- Navegação entre seções -->
+        <div class="footer-navigation">
+          <button class="nav-btn" id="prev-btn" disabled>
+            ← Anterior
+          </button>
+          <span class="nav-info" id="nav-info">1 de 4</span>
+          <button class="nav-btn" id="next-btn">
+            Próxima →
+          </button>
+        </div>
       </div>
 
-      <!-- Seleção de Horário -->
-      <div class="time-selector">
-        <label>Horário Disponível</label>
-        <div class="time-slots" id="time-slots">
-          <!-- Horários serão gerados dinamicamente -->
-        </div>
-      </div>
-
-      <!-- Formulário de Informações -->
-      <form id="booking-form" class="form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="name">Nome Completo</label>
-            <input id="name" name="name" type="text" required />
-          </div>
-          <div class="form-group">
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" required />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="phone">Telefone</label>
-            <input id="phone" name="phone" type="tel" required />
-          </div>
-          <div class="form-group">
-            <label for="duration">Duração</label>
-            <select id="duration" name="duration" required>
-              <option value="30">30 minutos</option>
-              <option value="60" selected>1 hora</option>
-              <option value="90">1h 30min</option>
-              <option value="120">2 horas</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="reason">Motivo da Consulta</label>
-          <textarea id="reason" name="reason" rows="3" placeholder="Descreva brevemente o motivo da sua consulta..." required></textarea>
-        </div>
-
-        <button type="submit" id="submit-btn">Agendar Consulta</button>
-      </form>
-
-      <div id="result" class="result" aria-live="polite"></div>
-    </section>
-
-    <footer class="footer">
-      <small>© <span id="year"></span> — Sistema de Agendamento</small>
-    </footer>
+      <footer class="footer">
+        <small>© <span id="year"></span> — Agenda da Franjinha</small>
+      </footer>
+    </div>
   </main>
 
   <script src="/booking.js"></script>
