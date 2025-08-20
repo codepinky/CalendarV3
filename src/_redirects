@@ -1,7 +1,0 @@
-# Redirecionamentos para URLs limpas
-/booking /pages/booking.html 200
-/styles/* /assets/css/* 200
-/scripts/* /assets/js/* 200
-
-# Fallback para SPA
-/* /pages/index.html 200
