@@ -141,18 +141,6 @@ function processCalendarEvents(availabilityData, date) {
   };
 }
 
-// Fallback padrão se nenhuma condição for atendida
-console.warn('⚠️ Nenhum formato reconhecido, usando fallback padrão');
-return {
-  success: true,
-  date: date,
-  availableSlots: generateDefaultTimeSlots(date),
-  bookedSlots: [],
-  lastUpdated: new Date().toISOString(),
-  totalEvents: 0,
-  source: 'Fallback Default'
-};
-
 // Função para gerar horários padrão de trabalho
 function generateDefaultTimeSlots(date) {
   const slots = [];
