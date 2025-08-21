@@ -47,9 +47,21 @@ export async function onRequestGet(context) {
         if (availabilityResponse.ok) {
           const calendarData = await availabilityResponse.json().catch(() => ({}));
           console.log('📅 Dados recebidos do Make:', calendarData);
+          console.log('📅 Estrutura dos dados:', Object.keys(calendarData));
+          
+          if (calendarData.occupied && calendarData.occupied.busy) {
+            console.log('📅 Total de slots ocupados recebidos:', calendarData.occupied.busy.length);
+            calendarData.occupied.busy.forEach((slot, index) => {
+              console.log(`📅 Slot ${index + 1}:`, slot);
+            });
+          }
           
           // Processar dados do Make para extrair horários disponíveis
           const processedData = processMakeData(calendarData, date);
+          
+          console.log('📅 Dados processados finais:', processedData);
+          console.log('📅 Total de horários disponíveis:', processedData.availableSlots?.length || 0);
+          console.log('📅 Total de horários ocupados:', processedData.bookedSlots?.length || 0);
           
           return json({
             success: true,
@@ -108,28 +120,48 @@ function processMakeData(makeData, date) {
           try {
             const startTime = new Date(slot.start);
             
-            // Converter para timezone local (America/Sao_Paulo)
-            const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+            // CORREÇÃO: Converter corretamente para timezone de Brasília
+            // O Make pode estar enviando em UTC, então vamos converter adequadamente
+            const utcTime = new Date(startTime.getTime() + (startTime.getTimezoneOffset() * 60000));
+            const brasiliaTime = new Date(utcTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
             
-            const hour = localStartTime.getHours();
-            const minute = localStartTime.getMinutes();
+            const hour = brasiliaTime.getHours();
+            const minute = brasiliaTime.getMinutes();
+            
             // Formatar para o padrão HH:30
             const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
             bookedSlots.push(timeSlot);
+            
+            console.log(`🕐 Slot ocupado processado: ${slot.start} -> ${timeSlot} (Brasília)`);
           } catch (error) {
             console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
           }
         }
       });
       
-      // Gerar horários disponíveis (excluindo os ocupados)
+      console.log('📅 Total de slots ocupados recebidos:', makeData.occupied.busy.length);
+      console.log('📅 Slots ocupados processados:', bookedSlots);
+      
+      // Gerar horários disponíveis (excluindo os ocupados E seus consecutivos)
       const allSlots = generateDefaultTimeSlots(date);
       availableSlots = allSlots.filter(slot => {
         // Verificar se este horário está ocupado
         if (bookedSlots.includes(slot)) {
+          console.log(`❌ Horário ${slot} está ocupado`);
           return false; // Está ocupado
         }
         
+        // CORREÇÃO: Verificar se o horário anterior está ocupado (para evitar conflito)
+        const [hour, minute] = slot.split(':').map(Number);
+        const previousHour = hour - 1;
+        const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
+        
+        if (bookedSlots.includes(previousSlot)) {
+          console.log(`❌ Horário ${slot} não disponível - anterior ${previousSlot} está ocupado`);
+          return false; // Não disponível por conflito
+        }
+        
+        console.log(`✅ Horário ${slot} está disponível`);
         return true; // Está disponível
       });
       
@@ -205,28 +237,46 @@ function processMakeData(makeData, date) {
           try {
             const startTime = new Date(event.start.dateTime);
             
-            // Converter para timezone local (America/Sao_Paulo)
-            const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+            // CORREÇÃO: Converter corretamente para timezone de Brasília
+            const utcTime = new Date(startTime.getTime() + (startTime.getTimezoneOffset() * 60000));
+            const brasiliaTime = new Date(utcTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
             
-            const hour = localStartTime.getHours();
-            const minute = localStartTime.getMinutes();
+            const hour = brasiliaTime.getHours();
+            const minute = brasiliaTime.getMinutes();
             // Formatar para o padrão HH:30
             const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
             bookedSlots.push(timeSlot);
+            
+            console.log(`🕐 Evento processado: ${event.start.dateTime} -> ${timeSlot} (Brasília)`);
           } catch (error) {
             console.warn('⚠️ Erro ao processar evento:', event, error);
           }
         }
       });
       
-      // Gerar horários disponíveis (excluindo os agendados)
+      console.log('📅 Total de eventos recebidos:', makeData.events.length);
+      console.log('📅 Slots ocupados processados:', bookedSlots);
+      
+      // Gerar horários disponíveis (excluindo os agendados E seus consecutivos)
       const allSlots = generateDefaultTimeSlots(date);
       availableSlots = allSlots.filter(slot => {
         // Verificar se este horário está ocupado
         if (bookedSlots.includes(slot)) {
+          console.log(`❌ Horário ${slot} está ocupado`);
           return false; // Está ocupado
         }
         
+        // CORREÇÃO: Verificar se o horário anterior está ocupado (para evitar conflito)
+        const [hour, minute] = slot.split(':').map(Number);
+        const previousHour = hour - 1;
+        const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
+        
+        if (bookedSlots.includes(previousSlot)) {
+          console.log(`❌ Horário ${slot} não disponível - anterior ${previousSlot} está ocupado`);
+          return false; // Não disponível por conflito
+        }
+        
+        console.log(`✅ Horário ${slot} está disponível`);
         return true; // Está disponível
       });
       
