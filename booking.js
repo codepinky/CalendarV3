@@ -434,25 +434,25 @@ async function handleSubmit(event) {
     
     // SOLUÇÃO DEFINITIVA: Usar o mesmo valor que funciona na verificação de disponibilidade
     const selectedDateSlot = document.querySelector('.date-slot.selected');
-    if (selectedDateSlot) {
-      const selectedDate = selectedDateSlot.dataset.date;
-      console.log('🎯 SOLUÇÃO - Data selecionada visualmente:', selectedDate);
-      
-      // Criar dados manualmente em vez de usar FormData
-      const data = {
-        date: selectedDate,
-        'meeting-time': document.getElementById('meeting-time').value,
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        duration: document.getElementById('duration').value,
-        reason: document.getElementById('reason').value
-      };
-      
-      console.log('🎯 SOLUÇÃO - Dados capturados manualmente:', data);
-    } else {
+    if (!selectedDateSlot) {
       throw new Error('Nenhuma data selecionada. Por favor, selecione uma data.');
     }
+    
+    const selectedDate = selectedDateSlot.dataset.date;
+    console.log('🎯 SOLUÇÃO - Data selecionada visualmente:', selectedDate);
+    
+    // Criar dados manualmente em vez de usar FormData
+    const data = {
+      date: selectedDate,
+      'meeting-time': document.getElementById('meeting-time').value,
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      duration: document.getElementById('duration').value,
+      reason: document.getElementById('reason').value
+    };
+    
+    console.log('🎯 SOLUÇÃO - Dados capturados manualmente:', data);
     
     // Validações básicas
     if (!data['date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
