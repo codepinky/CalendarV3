@@ -45,45 +45,98 @@ async function checkAvailabilityForDate(date) {
   }
 }
 
-// Função para processar eventos do Google Calendar e calcular disponibilidade
-function processCalendarEvents(events, date) {
-  // Não mais usar horários hardcoded - apenas processar eventos do Make
-  const bookedSlots = [];
-  
-  // Processar eventos do Google Calendar
-  if (events && events.length > 0) {
-    events.forEach(event => {
-      if (event.start && event.start.dateTime) {
+// Função para processar dados de disponibilidade do Make
+function processCalendarEvents(availabilityData, date) {
+  // NOVO FORMATO: Se vier do Make com wrapper busy
+  if (availabilityData && availabilityData.occupied && availabilityData.occupied.busy) {
+    console.log('✅ Dados recebidos do Make com wrapper busy:', availabilityData);
+    
+    const bookedSlots = [];
+    const availableSlots = [];
+    
+    // Processar horários ocupados
+    availabilityData.occupied.busy.forEach(slot => {
+      if (slot.start && slot.end) {
         try {
-          // Converter para data local
-          const startTime = new Date(event.start.dateTime);
-          const hour = startTime.getHours();
-          const minute = startTime.getMinutes();
-          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          const startTime = new Date(slot.start);
+          const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
           
-          // Adicionar todos os horários encontrados (sem filtro hardcoded)
+          const hour = localStartTime.getHours();
+          const minute = localStartTime.getMinutes();
+          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           bookedSlots.push(timeSlot);
         } catch (error) {
-          console.warn('Erro ao processar evento:', event, error);
+          console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
+        }
+      }
+    });
+    
+    // Gerar horários disponíveis (excluindo os ocupados)
+    const allSlots = generateDefaultTimeSlots(date);
+    availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+    
+    console.log('📅 Horários ocupados:', bookedSlots);
+    console.log('⏰ Horários disponíveis:', availableSlots);
+    
+    return {
+      success: true,
+      date: date,
+      availableSlots,
+      bookedSlots,
+      lastUpdated: new Date().toISOString(),
+      totalEvents: availabilityData.occupied.busy.length,
+      timezone: availabilityData.timezone || 'America/Sao_Paulo',
+      source: 'Make Integration (Busy Format)'
+    };
+  }
+  
+  // O Make agora retorna dados já processados
+  if (availabilityData && availabilityData.availableSlots) {
+    console.log('✅ Dados processados recebidos do Make:', availabilityData);
+    return {
+      success: true,
+      date: date,
+      availableSlots: availabilityData.availableSlots || [],
+      bookedSlots: availabilityData.bookedSlots || [],
+      lastUpdated: new Date().toISOString(),
+      totalEvents: availabilityData.totalEvents || 0,
+      source: 'Make Integration'
+    };
+  }
+  
+  // Fallback para dados antigos (se ainda houver)
+  const bookedSlots = [];
+  
+  if (availabilityData && availabilityData.events) {
+    availabilityData.events.forEach(event => {
+      if (event.start && event.start.dateTime) {
+        try {
+          const startTime = new Date(event.start.dateTime);
+          
+          // Converter para timezone local (America/Sao_Paulo)
+          const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+          
+          const hour = localStartTime.getHours();
+          const minute = localStartTime.getMinutes();
+          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          bookedSlots.push(timeSlot);
+        } catch (error) {
+          console.warn('⚠️ Erro ao processar evento:', event, error);
         }
       }
     });
   }
   
-  // Se não há eventos, todos os horários estão disponíveis
-  // Se há eventos, apenas os horários não agendados estão disponíveis
-  // O Make deve retornar a lista completa de horários disponíveis
-  
-  console.log('Eventos recebidos do Make:', events);
-  console.log('Horários agendados encontrados:', bookedSlots);
+  console.log('📅 Dados recebidos do Make:', availabilityData);
+  console.log('⏰ Horários agendados encontrados:', bookedSlots);
   
   return {
     success: true,
     date: date,
-    availableSlots: [], // Será preenchido pelo Make
+    availableSlots: availabilityData.availableSlots || [],
     bookedSlots: bookedSlots,
     lastUpdated: new Date().toISOString(),
-    totalEvents: events ? events.length : 0,
+    totalEvents: availabilityData.totalEvents || 0,
     source: 'Make Integration'
   };
 }
@@ -193,11 +246,15 @@ async function generateTimeSlots() {
     // Limpar loading
     timeSlotsContainer.innerHTML = '';
     
-    // O Make deve retornar tanto horários disponíveis quanto agendados
-    // Não mais gerar horários hardcoded aqui
+    console.log('📅 Dados de disponibilidade recebidos:', availability);
     
+    // Verificar se temos horários disponíveis
     if (!availability.availableSlots || availability.availableSlots.length === 0) {
-      timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
+      if (availability.source === 'Fallback Mode') {
+        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Usando horários padrão. Verifique a integração com o Make.</div>';
+      } else {
+        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
+      }
       return;
     }
     

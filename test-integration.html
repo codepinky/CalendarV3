@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Integração - Make + Google Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .warning { border-left: 4px solid #ffc107; }
+        .info { border-left: 4px solid #17a2b8; }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Integração - Make + Google Calendar</h1>
+        
+        <div class="test-section">
+            <h2>📅 Teste de Disponibilidade</h2>
+            <p>Testa se a API está retornando dados corretamente:</p>
+            
+            <label for="test-date">Data para teste:</label>
+            <input type="date" id="test-date" value="">
+            <button class="test-button" onclick="testAvailability()">Testar Disponibilidade</button>
+            
+            <div id="availability-result" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔗 Teste de Conexão com Make</h2>
+            <p>Testa se o Make está respondendo:</p>
+            
+            <button class="test-button" onclick="testMakeConnection()">Testar Conexão Make</button>
+            <button class="test-button" onclick="testMakeWebhook()">Testar Webhook Make</button>
+            
+            <div id="make-result" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Status da Integração</h2>
+            <div id="integration-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 Logs de Debug</h2>
+            <button class="test-button" onclick="clearLogs()">Limpar Logs</button>
+            <div id="debug-logs" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Definir data de hoje como padrão
+        document.getElementById('test-date').value = new Date().toISOString().split('T')[0];
+        
+        // Função para adicionar logs
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('debug-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `status ${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        // Função para limpar logs
+        function clearLogs() {
+            document.getElementById('debug-logs').innerHTML = '';
+        }
+        
+        // Função para mostrar resultado
+        function showResult(elementId, data, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // Teste de disponibilidade
+        async function testAvailability() {
+            const date = document.getElementById('test-date').value;
+            if (!date) {
+                alert('Selecione uma data para teste');
+                return;
+            }
+            
+            addLog(`🔍 Testando disponibilidade para: ${date}`, 'info');
+            
+            try {
+                const response = await fetch(`/api/availability?date=${date}`);
+                const data = await response.json();
+                
+                addLog(`📡 Resposta da API: ${response.status} ${response.statusText}`, 'info');
+                
+                if (data.success) {
+                    addLog(`✅ Dados recebidos com sucesso`, 'success');
+                    showResult('availability-result', data, 'success');
+                    updateIntegrationStatus(data);
+                } else {
+                    addLog(`❌ Erro na API: ${data.reason}`, 'error');
+                    showResult('availability-result', data, 'error');
+                }
+            } catch (error) {
+                addLog(`💥 Erro na requisição: ${error.message}`, 'error');
+                showResult('availability-result', { error: error.message }, 'error');
+            }
+        }
+        
+        // Teste de conexão com Make
+        async function testMakeConnection() {
+            addLog(`🔗 Testando conexão com Make...`, 'info');
+            
+            try {
+                // Tentar acessar a API de disponibilidade
+                const response = await fetch('/api/availability?date=2024-01-15');
+                const data = await response.json();
+                
+                if (data.source === 'Make Integration') {
+                    addLog(`✅ Integração com Make funcionando`, 'success');
+                    showResult('make-result', { status: 'success', message: 'Make está funcionando', data }, 'success');
+                } else if (data.source === 'Fallback Mode') {
+                    addLog(`⚠️ Usando modo fallback - Make não configurado`, 'warning');
+                    showResult('make-result', { status: 'warning', message: 'Make não configurado - usando fallback', data }, 'warning');
+                } else {
+                    addLog(`❓ Fonte de dados desconhecida: ${data.source}`, 'warning');
+                    showResult('make-result', { status: 'unknown', message: 'Fonte desconhecida', data }, 'warning');
+                }
+            } catch (error) {
+                addLog(`💥 Erro ao testar Make: ${error.message}`, 'error');
+                showResult('make-result', { status: 'error', message: error.message }, 'error');
+            }
+        }
+        
+        // Teste de webhook do Make
+        async function testMakeWebhook() {
+            addLog(`🔗 Testando webhook do Make...`, 'info');
+            
+            // URL de exemplo - substitua pela sua URL real
+            const webhookUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
+            
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'test',
+                        date: '2024-01-15',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                addLog(`📡 Resposta do webhook: ${response.status}`, 'info');
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    addLog(`✅ Webhook respondeu com sucesso`, 'success');
+                    showResult('make-result', { status: 'success', message: 'Webhook funcionando', response: data }, 'success');
+                } else {
+                    addLog(`❌ Webhook retornou erro: ${response.status}`, 'error');
+                    showResult('make-result', { status: 'error', message: `Erro ${response.status}` }, 'error');
+                }
+            } catch (error) {
+                addLog(`💥 Erro ao testar webhook: ${error.message}`, 'error');
+                showResult('make-result', { status: 'error', message: error.message }, 'error');
+            }
+        }
+        
+        // Atualizar status da integração
+        function updateIntegrationStatus(data) {
+            const statusDiv = document.getElementById('integration-status');
+            
+            let statusHtml = '<h3>Status da Integração:</h3>';
+            
+            if (data.source === 'Make Integration') {
+                statusHtml += `
+                    <div class="status success">✅ Make Integrado</div>
+                    <p><strong>Horários disponíveis:</strong> ${data.availableSlots ? data.availableSlots.length : 0}</p>
+                    <p><strong>Horários agendados:</strong> ${data.bookedSlots ? data.bookedSlots.length : 0}</p>
+                    <p><strong>Total de eventos:</strong> ${data.totalEvents || 0}</p>
+                `;
+            } else if (data.source === 'Fallback Mode') {
+                statusHtml += `
+                    <div class="status warning">⚠️ Modo Fallback</div>
+                    <p><strong>Horários padrão:</strong> ${data.availableSlots ? data.availableSlots.length : 0}</p>
+                    <p><em>Configure o Make para integração completa</em></p>
+                `;
+            } else {
+                statusHtml += `
+                    <div class="status info">❓ Fonte Desconhecida</div>
+                    <p><strong>Fonte:</strong> ${data.source || 'N/A'}</p>
+                `;
+            }
+            
+            statusDiv.innerHTML = statusHtml;
+        }
+        
+        // Inicializar página
+        window.onload = function() {
+            addLog(`🚀 Página de teste carregada`, 'info');
+            addLog(`📅 Data padrão: ${document.getElementById('test-date').value}`, 'info');
+            addLog(`🔗 Teste a integração clicando nos botões acima`, 'info');
+        };
+    </script>
+</body>
+</html>

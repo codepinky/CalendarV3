@@ -1,181 +1,122 @@
-# Configuração do Make para Gerenciar Disponibilidade
+# Configuração do Make para Integração com Google Calendar
 
-Este arquivo mostra como configurar o Make (Integromat) para que o sistema funcione corretamente com horários indisponíveis.
+## Problema Identificado
+Sua aplicação está tentando consultar o Make, mas o Make não está retornando dados para o frontend.
 
-## 🔄 Cenário 1: Verificação de Disponibilidade
+## Solução: Configuração Correta do Make
 
-### Estrutura do Cenário
+### 1. **Estrutura do Cenário no Make**
+
 ```
-Webhook → Google Calendar → Router → Response
+Google Calendar (Get free/busy) → Processamento → HTTP Response → Sua Aplicação
 ```
 
-### 1. Webhook de Entrada
-- **Método**: POST
-- **URL**: Sua URL do Make
-- **Payload esperado**:
-```json
-{
-  "action": "check_availability",
-  "date": "2024-01-15",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+### 2. **Configuração do Módulo Google Calendar**
+- **Módulo**: Google Calendar
+- **Ação**: Get free/busy
+- **Calendar ID**: Seu ID do calendário
+- **Time Min**: `{{formatDate(now; "YYYY-MM-DDTHH:mm:ss")}}`
+- **Time Max**: `{{formatDate(addDays(now; 1); "YYYY-MM-DDTHH:mm:ss")}}`
+
+### 3. **Processamento dos Dados**
+Após o Google Calendar, adicione um módulo **Set up a filter** ou **Code** para processar os dados:
+
+```javascript
+// Exemplo de processamento no Make
+const events = data.events || [];
+const availableSlots = [];
+const bookedSlots = [];
+
+// Horários de trabalho padrão (13:00 - 21:00)
+for (let hour = 13; hour < 21; hour++) {
+  const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+  
+  // Verificar se este horário está ocupado
+  const isBooked = events.some(event => {
+    const eventStart = new Date(event.start.dateTime);
+    const eventHour = eventStart.getHours();
+    return eventHour === hour;
+  });
+  
+  if (!isBooked) {
+    availableSlots.push(timeSlot);
+  } else {
+    bookedSlots.push(timeSlot);
+  }
 }
-```
 
-### 2. Google Calendar - Listar Eventos
-- **Ação**: List Events
-- **Calendar ID**: Seu calendário
-- **Time Min**: `{{date}}T00:00:00Z`
-- **Time Max**: `{{date}}T23:59:59Z`
-- **Single Events**: true
-
-### 3. Router para Processar
-- **Condição**: `action = "check_availability"`
-
-### 4. Processar Eventos
-- **Mapear horários agendados**:
-```javascript
-// Para cada evento encontrado
-const startTime = event.start.dateTime;
-const hour = new Date(startTime).getHours();
-const minute = new Date(startTime).getMinutes();
-const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-```
-
-### 5. Gerar Horários Disponíveis
-```javascript
-// Horários base do sistema
-const baseSlots = ["13:30", "15:30", "17:30", "19:30"];
-
-// Filtrar horários não agendados
-const availableSlots = baseSlots.filter(slot => 
-  !bookedSlots.includes(slot)
-);
-
-// Resposta final
+// Retornar dados processados
 {
-  "success": true,
-  "date": "{{date}}",
   "availableSlots": availableSlots,
   "bookedSlots": bookedSlots,
-  "lastUpdated": "{{now}}"
+  "totalEvents": events.length,
+  "date": "{{formatDate(now; "YYYY-MM-DD")}}"
 }
 ```
 
-## 📅 Cenário 2: Criação de Agendamento
+### 4. **Módulo HTTP Response**
+- **Módulo**: HTTP Response
+- **Status Code**: 200
+- **Response Body**: Os dados processados acima
+- **Headers**: 
+  - `Content-Type: application/json`
+  - `Access-Control-Allow-Origin: *`
 
-### Estrutura do Cenário
-```
-Webhook → Google Calendar → Email/WhatsApp → Response
-```
+### 5. **Configuração da Aplicação**
 
-### 1. Webhook de Entrada
-- **Payload esperado**:
-```json
-{
-  "date": "2024-01-15",
-  "time": "14:30",
-  "datetime": "2024-01-15T14:30:00",
-  "name": "Nome do Cliente",
-  "email": "cliente@email.com",
-  "phone": "(11) 99999-9999",
-  "reason": "Observações",
-  "duration": 60
-}
+#### Variáveis de Ambiente (Cloudflare Pages)
+```bash
+MAKE_AVAILABILITY_URL=https://seu-cenario.make.com/webhook/abc123
+MAKE_API_KEY=sua_chave_api_se_necessario
 ```
 
-### 2. Google Calendar - Criar Evento
-- **Ação**: Create Event
-- **Summary**: `{{name}} - Encontro`
-- **Start Date**: `{{date}}T{{time}}:00`
-- **End Date**: `{{date}}T{{time}}:00` + 1 hora
-- **Description**: Dados do cliente e observações
+#### URL do Webhook
+A URL deve ser a do seu cenário no Make, não um webhook genérico.
 
-### 3. Enviar Confirmação
-- **Email** ou **WhatsApp** para o cliente
-- **Resposta de sucesso**:
+### 6. **Fluxo de Dados Correto**
+
+```
+Frontend → /api/availability → Make (Google Calendar) → Dados Processados → Frontend
+```
+
+### 7. **Teste da Integração**
+
+1. **No Make**: Execute o cenário manualmente
+2. **Verifique os logs**: Console do navegador e Cloudflare Functions
+3. **Teste a URL**: Acesse diretamente a URL do Make para ver se retorna dados
+
+### 8. **Exemplo de Resposta Esperada**
+
 ```json
 {
   "success": true,
-  "message": "Agendamento criado com sucesso!",
-  "eventId": "{{event.id}}"
+  "date": "2024-01-15",
+  "availableSlots": ["13:00", "14:00", "16:00", "17:00", "19:00", "20:00"],
+  "bookedSlots": ["15:00", "18:00"],
+  "totalEvents": 2,
+  "lastUpdated": "2024-01-15T10:30:00.000Z",
+  "source": "Make Integration"
 }
 ```
 
-## ⚙️ Configurações Importantes
+### 9. **Troubleshooting**
 
-### 1. Horários de Trabalho
-Configure no Make para corresponder ao `config.js`:
-- **Início**: 13:30 (13.5)
-- **Fim**: 21:30 (21.5)
-- **Intervalo**: 2 horas
-- **Duração**: 1 hora
+#### Se o Make não retornar dados:
+- Verifique se o cenário está ativo
+- Teste a execução manual
+- Verifique os logs do Make
+- Confirme se a URL está correta
 
-### 2. Formato de Data/Hora
-- **Data**: YYYY-MM-DD
-- **Hora**: HH:MM (24h)
-- **Timezone**: UTC ou seu timezone local
+#### Se a aplicação não receber dados:
+- Verifique o console do navegador
+- Verifique os logs do Cloudflare Functions
+- Confirme se as variáveis de ambiente estão configuradas
 
-### 3. Tratamento de Erros
-- **Validação**: Verificar se horário está disponível antes de criar
-- **Duplicação**: Evitar agendamentos duplicados
-- **Fallback**: Resposta de erro em caso de falha
+### 10. **Configuração Alternativa (Webhook)**
 
-## 🔧 Exemplo de Código Make
+Se preferir usar webhook, configure o Make para:
+1. **Receber** requisições do seu frontend
+2. **Processar** com Google Calendar
+3. **Enviar** resposta via HTTP Response
 
-### Verificar Disponibilidade
-```javascript
-// No módulo Code do Make
-const date = data.date;
-const baseSlots = ["13:30", "15:30", "17:30", "19:30"];
-
-// Buscar eventos do Google Calendar
-const events = await googleCalendar.listEvents({
-  calendarId: 'primary',
-  timeMin: `${date}T00:00:00Z`,
-  timeMax: `${date}T23:59:59Z`
-});
-
-// Extrair horários agendados
-const bookedSlots = events.items.map(event => {
-  const start = new Date(event.start.dateTime);
-  return `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
-});
-
-// Filtrar horários disponíveis
-const availableSlots = baseSlots.filter(slot => !bookedSlots.includes(slot));
-
-// Retornar resposta
-return {
-  success: true,
-  date: date,
-  availableSlots: availableSlots,
-  bookedSlots: bookedSlots,
-  lastUpdated: new Date().toISOString()
-};
-```
-
-## 🚀 Testando a Configuração
-
-### 1. Teste de Disponibilidade
-- Acesse: `GET /api/availability?date=2024-01-15`
-- Verifique se retorna horários corretos
-
-### 2. Teste de Agendamento
-- Faça um agendamento via formulário
-- Verifique se aparece no Google Calendar
-- Verifique se horário fica indisponível
-
-### 3. Teste de Sincronização
-- Agende em outro dispositivo/navegador
-- Verifique se horários indisponíveis não aparecem
-
-## 📝 Notas Importantes
-
-- **Cache**: O sistema usa cache local para performance
-- **Refresh**: Atualização automática a cada 30 segundos
-- **Fallback**: Em caso de erro, mostra todos os horários como disponíveis
-- **Segurança**: Validação de dados em ambas as APIs
-
----
-
-**Configuração necessária para o sistema funcionar com horários indisponíveis**
+A URL do webhook seria: `https://seu-cenario.make.com/webhook/abc123`
