@@ -64,14 +64,26 @@ function processCalendarEvents(availabilityData, date) {
   // O Make agora retorna dados já processados
   if (availabilityData && availabilityData.availableSlots) {
     console.log('✅ Dados processados recebidos do Make:', availabilityData);
+    
+    // CORREÇÃO: Aplicar lógica de exclusão de horários consecutivos
+    const originalSlots = availabilityData.availableSlots || [];
+    const filteredSlots = originalSlots.filter((slot, index) => {
+      // Manter apenas horários alternados (índices pares: 0, 2, 4, 6, 8)
+      // Isso garante: 13:30, 15:30, 17:30, 19:30, 21:30
+      return index % 2 === 0;
+    });
+    
+    console.log('📅 Horários originais recebidos:', originalSlots);
+    console.log('⏰ Horários filtrados (alternados):', filteredSlots);
+    
     return {
       success: true,
       date: date,
-      availableSlots: availabilityData.availableSlots || [],
+      availableSlots: filteredSlots,
       bookedSlots: availabilityData.bookedSlots || [],
       lastUpdated: new Date().toISOString(),
       totalEvents: availabilityData.totalEvents || 0,
-      source: 'Make Integration'
+      source: 'Make Integration (Frontend Filtered)'
     };
   }
   
