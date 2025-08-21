@@ -148,7 +148,7 @@ function processMakeData(makeData, date) {
     // Se o Make retornar eventos do Google Calendar, processar
     if (makeData && makeData.events) {
       const bookedSlots = [];
-      const availableSlots = [];
+      let availableSlots = [];
       
       // Processar eventos para extrair horários agendados
       makeData.events.forEach(event => {
