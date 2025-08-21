@@ -59,7 +59,8 @@ function processCalendarEvents(availabilityData, date) {
           
           const hour = localStartTime.getHours();
           const minute = localStartTime.getMinutes();
-          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          // Formatar para o padrão HH:30 (mesmo padrão do backend)
+          const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
           bookedSlots.push(timeSlot);
         } catch (error) {
           console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
@@ -114,7 +115,8 @@ function processCalendarEvents(availabilityData, date) {
           
           const hour = localStartTime.getHours();
           const minute = localStartTime.getMinutes();
-          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          // Formatar para o padrão HH:30 (mesmo padrão do backend)
+          const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
           bookedSlots.push(timeSlot);
         } catch (error) {
           console.warn('⚠️ Erro ao processar evento:', event, error);
@@ -140,12 +142,12 @@ function processCalendarEvents(availabilityData, date) {
 // Função para gerar horários padrão de trabalho
 function generateDefaultTimeSlots(date) {
   const slots = [];
-  const startHour = 13; // 13:00
-  const endHour = 21;   // 21:00
+  const startHour = 13; // 13:30
+  const endHour = 22;   // 22:30
   const interval = 1;   // 1 hora
   
   for (let hour = startHour; hour < endHour; hour += interval) {
-    const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+    const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
     slots.push(timeSlot);
   }
   
