@@ -464,3 +464,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// Função para scroll suave até o footer
+function scrollToFooter() {
+  const footer = document.querySelector('.smart-footer');
+  if (footer) {
+    // Primeiro expandir o footer se estiver fechado
+    const footerContent = document.getElementById('footer-content');
+    const footerToggle = document.getElementById('footer-toggle');
+    
+    if (!footerContent.classList.contains('active')) {
+      footerToggle.click(); // Simula o clique para expandir
+    }
+    
+    // Scroll suave até o footer
+    setTimeout(() => {
+      footer.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      });
+    }, 300);
+  }
+}
