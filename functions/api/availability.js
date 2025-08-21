@@ -30,7 +30,7 @@ export async function onRequestGet(context) {
     // Se o Make estiver configurado, consultar eventos do Google Calendar
     if (env.MAKE_AVAILABILITY_URL || true) {
       // URL do webhook de disponibilidade (substitua pela sua URL real)
-      const availabilityWebhookUrl = env.MAKE_AVAILABILITY_URL || 'https://hook.us2.make.com/SEU_WEBHOOK_DE_DISPONIBILIDADE_AQUI';
+      const availabilityWebhookUrl = env.MAKE_AVAILABILITY_URL || 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
       
       const availabilityResponse = await fetch(availabilityWebhookUrl, {
         method: 'POST',
