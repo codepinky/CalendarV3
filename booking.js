@@ -141,6 +141,33 @@ function processCalendarEvents(availabilityData, date) {
   };
 }
 
+// Fallback padrão se nenhuma condição for atendida
+console.warn('⚠️ Nenhum formato reconhecido, usando fallback padrão');
+return {
+  success: true,
+  date: date,
+  availableSlots: generateDefaultTimeSlots(date),
+  bookedSlots: [],
+  lastUpdated: new Date().toISOString(),
+  totalEvents: 0,
+  source: 'Fallback Default'
+};
+
+// Função para gerar horários padrão de trabalho
+function generateDefaultTimeSlots(date) {
+  const slots = [];
+  const startHour = 13; // 13:00
+  const endHour = 21;   // 21:00
+  const interval = 1;   // 1 hora
+  
+  for (let hour = startHour; hour < endHour; hour += interval) {
+    const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+    slots.push(timeSlot);
+  }
+  
+  return slots;
+}
+
 // Função para gerar as próximas datas disponíveis (8 dias)
 function generateAvailableDates() {
   const dateSelector = document.querySelector('.date-selector');
