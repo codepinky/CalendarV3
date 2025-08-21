@@ -7,10 +7,11 @@ const CONFIG = {
   
   // Configurações dos horários de trabalho
   WORKING_HOURS: {
-    start: 13.5, // 13:30
-    end: 21.5,   // 21:30
-    interval: 2, // 2 horas entre encontros (1h encontro + 1h intervalo)
-    duration: 1  // 1 hora de duração
+    // Horários agora são gerenciados pelo Make
+    // start: 13.5, // 13:30 - REMOVIDO
+    // end: 21.5,   // 21:30 - REMOVIDO
+    // interval: 2, // 2 horas entre encontros - REMOVIDO
+    duration: 1  // 1 hora de duração (mantido para cálculos)
   },
   
   // Configurações da interface

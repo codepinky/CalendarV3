@@ -47,8 +47,7 @@ async function checkAvailabilityForDate(date) {
 
 // Função para processar eventos do Google Calendar e calcular disponibilidade
 function processCalendarEvents(events, date) {
-  // Horários base do sistema (deve corresponder ao config.js)
-  const baseSlots = ["13:30", "15:30", "17:30", "19:30"];
+  // Não mais usar horários hardcoded - apenas processar eventos do Make
   const bookedSlots = [];
   
   // Processar eventos do Google Calendar
@@ -62,10 +61,8 @@ function processCalendarEvents(events, date) {
           const minute = startTime.getMinutes();
           const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           
-          // Só incluir se for um dos horários base do sistema
-          if (baseSlots.includes(timeSlot)) {
-            bookedSlots.push(timeSlot);
-          }
+          // Adicionar todos os horários encontrados (sem filtro hardcoded)
+          bookedSlots.push(timeSlot);
         } catch (error) {
           console.warn('Erro ao processar evento:', event, error);
         }
@@ -73,20 +70,21 @@ function processCalendarEvents(events, date) {
     });
   }
   
-  // Filtrar horários disponíveis
-  const availableSlots = baseSlots.filter(slot => !bookedSlots.includes(slot));
+  // Se não há eventos, todos os horários estão disponíveis
+  // Se há eventos, apenas os horários não agendados estão disponíveis
+  // O Make deve retornar a lista completa de horários disponíveis
   
-  console.log('Horários base:', baseSlots);
-  console.log('Horários agendados:', bookedSlots);
-  console.log('Horários disponíveis:', availableSlots);
+  console.log('Eventos recebidos do Make:', events);
+  console.log('Horários agendados encontrados:', bookedSlots);
   
   return {
     success: true,
     date: date,
-    availableSlots: availableSlots,
+    availableSlots: [], // Será preenchido pelo Make
     bookedSlots: bookedSlots,
     lastUpdated: new Date().toISOString(),
-    totalEvents: events ? events.length : 0
+    totalEvents: events ? events.length : 0,
+    source: 'Make Integration'
   };
 }
 
@@ -195,49 +193,28 @@ async function generateTimeSlots() {
     // Limpar loading
     timeSlotsContainer.innerHTML = '';
     
-    // Gerar todos os horários possíveis
-    const allSlots = [];
-    let currentTime = WORKING_HOURS.start;
+    // O Make deve retornar tanto horários disponíveis quanto agendados
+    // Não mais gerar horários hardcoded aqui
     
-    while (currentTime < WORKING_HOURS.end) {
-      const startHour = Math.floor(currentTime);
-      const startMinute = (currentTime % 1) * 60;
-      const endTime = currentTime + WORKING_HOURS.duration;
-      const endHour = Math.floor(endTime);
-      const endMinute = (endTime % 1) * 60;
-      
-      const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
-      const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-      
-      allSlots.push({
-        start: startTimeStr,
-        end: endTimeStr,
-        value: startTimeStr
-      });
-      
-      currentTime += WORKING_HOURS.interval;
+    if (!availability.availableSlots || availability.availableSlots.length === 0) {
+      timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
+      return;
     }
     
-    // Filtrar horários disponíveis vs. agendados
-    const availableSlots = allSlots.filter(slot => 
-      availability.availableSlots.includes(slot.start)
-    );
-    
-    const bookedSlots = allSlots.filter(slot => 
-      availability.bookedSlots.includes(slot.start)
-    );
-    
-    console.log('Horários disponíveis:', availableSlots.map(s => s.start));
-    console.log('Horários agendados:', bookedSlots.map(s => s.start));
-    
-    // Criar elementos HTML para horários disponíveis
-    availableSlots.forEach(slot => {
+    // Criar elementos HTML para horários disponíveis (vindos do Make)
+    availability.availableSlots.forEach(slot => {
       const timeSlot = document.createElement('div');
       timeSlot.className = 'time-slot available';
-      timeSlot.dataset.time = slot.value;
+      timeSlot.dataset.time = slot;
+      
+      // Formatar horário para exibição
+      const [startHour, startMinute] = slot.split(':');
+      const endHour = parseInt(startHour) + 1;
+      const endMinute = startMinute;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
       
       timeSlot.innerHTML = `
-        <span class="time-start">${slot.start} - ${slot.end}</span>
+        <span class="time-start">${slot} - ${endTime}</span>
         <span class="time-duration">1 hora de atendimento</span>
         <span class="time-available">Horário Disponível</span>
       `;
@@ -249,22 +226,28 @@ async function generateTimeSlots() {
         // Selecionar este horário
         timeSlot.classList.add('selected');
         // Atualizar campo hidden com apenas o horário de início
-        document.getElementById('meeting-time').value = slot.start;
-        console.log('Horário selecionado:', slot.start);
+        document.getElementById('meeting-time').value = slot;
+        console.log('Horário selecionado:', slot);
       });
       
       timeSlotsContainer.appendChild(timeSlot);
     });
     
     // Criar elementos HTML para horários agendados (se configurado para mostrar)
-    if (CONFIG.SYNC.showBookedSlots) {
-      bookedSlots.forEach(slot => {
+    if (CONFIG.SYNC.showBookedSlots && availability.bookedSlots && availability.bookedSlots.length > 0) {
+      availability.bookedSlots.forEach(slot => {
         const timeSlot = document.createElement('div');
         timeSlot.className = 'time-slot booked';
-        timeSlot.dataset.time = slot.value;
+        timeSlot.dataset.time = slot;
+        
+        // Formatar horário para exibição
+        const [startHour, startMinute] = slot.split(':');
+        const endHour = parseInt(startHour) + 1;
+        const endMinute = startMinute;
+        const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
         
         timeSlot.innerHTML = `
-          <span class="time-start">${slot.start} - ${slot.end}</span>
+          <span class="time-start">${slot} - ${endTime}</span>
           <span class="time-duration">1 hora de atendimento</span>
           <span class="time-booked">Horário Agendado</span>
         `;
@@ -278,7 +261,7 @@ async function generateTimeSlots() {
     }
     
     // Se não há horários disponíveis
-    if (availableSlots.length === 0) {
+    if (availability.availableSlots.length === 0) {
       if (availability.source === 'Fallback Mode') {
         timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
       } else {

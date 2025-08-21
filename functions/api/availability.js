@@ -80,6 +80,8 @@ export async function onRequestGet(context) {
       success: true,
       date: date,
       events: [], // Nenhum evento por padrão
+      availableSlots: [], // Nenhum horário disponível por padrão
+      bookedSlots: [], // Nenhum horário agendado por padrão
       lastUpdated: new Date().toISOString(),
       note: 'Modo fallback - verifique a integração com o Make',
       source: 'Fallback Mode'
