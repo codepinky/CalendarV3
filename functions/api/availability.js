@@ -113,7 +113,8 @@ function processMakeData(makeData, date) {
             
             const hour = localStartTime.getHours();
             const minute = localStartTime.getMinutes();
-            const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            // Formatar para o padrão HH:30
+            const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
             bookedSlots.push(timeSlot);
           } catch (error) {
             console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
@@ -125,6 +126,7 @@ function processMakeData(makeData, date) {
       const allSlots = generateDefaultTimeSlots(date);
       availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
       
+      console.log('📅 Horários padrão gerados:', allSlots);
       console.log('📅 Horários ocupados:', bookedSlots);
       console.log('⏰ Horários disponíveis:', availableSlots);
       
@@ -157,7 +159,8 @@ function processMakeData(makeData, date) {
             
             const startHour = localStartTime.getHours();
             const startMinute = localStartTime.getMinutes();
-            const timeSlot = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+            // Formatar para o padrão HH:30
+            const timeSlot = `${startHour.toString().padStart(2, '0')}:30`;
             
             availableSlots.push(timeSlot);
           } catch (error) {
@@ -200,7 +203,8 @@ function processMakeData(makeData, date) {
             
             const hour = localStartTime.getHours();
             const minute = localStartTime.getMinutes();
-            const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            // Formatar para o padrão HH:30
+            const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
             bookedSlots.push(timeSlot);
           } catch (error) {
             console.warn('⚠️ Erro ao processar evento:', event, error);
@@ -243,12 +247,12 @@ function processMakeData(makeData, date) {
 // Função para gerar horários padrão de trabalho
 function generateDefaultTimeSlots(date) {
   const slots = [];
-  const startHour = 13; // 13:00
-  const endHour = 21;   // 21:00
+  const startHour = 13; // 13:30
+  const endHour = 22;   // 22:30
   const interval = 1;   // 1 hora
   
   for (let hour = startHour; hour < endHour; hour += interval) {
-    const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+    const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
     slots.push(timeSlot);
   }
   
