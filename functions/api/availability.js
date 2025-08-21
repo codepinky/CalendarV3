@@ -122,9 +122,26 @@ function processMakeData(makeData, date) {
         }
       });
       
-      // Gerar horários disponíveis (excluindo os ocupados)
+      // Gerar horários disponíveis (excluindo os ocupados e seus consecutivos)
       const allSlots = generateDefaultTimeSlots(date);
-      availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+      availableSlots = allSlots.filter(slot => {
+        // Verificar se este horário está ocupado
+        if (bookedSlots.includes(slot)) {
+          return false; // Está ocupado
+        }
+        
+        // Verificar se o horário anterior está ocupado (para evitar sobreposição)
+        const [hour, minute] = slot.split(':').map(Number);
+        const previousHour = hour - 1;
+        const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
+        
+        // Se o horário anterior está ocupado, este também não está disponível
+        if (bookedSlots.includes(previousSlot)) {
+          return false;
+        }
+        
+        return true; // Está disponível
+      });
       
       console.log('📅 Horários padrão gerados:', allSlots);
       console.log('📅 Horários ocupados:', bookedSlots);
@@ -212,9 +229,26 @@ function processMakeData(makeData, date) {
         }
       });
       
-      // Gerar horários disponíveis (excluindo os agendados)
+      // Gerar horários disponíveis (excluindo os agendados e seus consecutivos)
       const allSlots = generateDefaultTimeSlots(date);
-      availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+      availableSlots = allSlots.filter(slot => {
+        // Verificar se este horário está ocupado
+        if (bookedSlots.includes(slot)) {
+          return false; // Está ocupado
+        }
+        
+        // Verificar se o horário anterior está ocupado (para evitar sobreposição)
+        const [hour, minute] = slot.split(':').map(Number);
+        const previousHour = hour - 1;
+        const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
+        
+        // Se o horário anterior está ocupado, este também não está disponível
+        if (bookedSlots.includes(previousSlot)) {
+          return false;
+        }
+        
+        return true; // Está disponível
+      });
       
       return {
         availableSlots,
