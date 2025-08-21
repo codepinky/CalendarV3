@@ -3,23 +3,9 @@
 // Usar configurações do arquivo config.js
 const WORKING_HOURS = CONFIG.WORKING_HOURS;
 
-// Cache para disponibilidade de horários
-let availabilityCache = new Map();
-let lastAvailabilityCheck = 0;
-
 // Função para verificar disponibilidade de horários para uma data específica
 async function checkAvailabilityForDate(date) {
   try {
-    // Verificar se já temos dados em cache e se não estão muito antigos
-    const cacheKey = date;
-    const now = Date.now();
-    
-    if (availabilityCache.has(cacheKey) && 
-        (now - lastAvailabilityCheck) < CONFIG.UI.refreshInterval) {
-      console.log('Usando dados de disponibilidade em cache para:', date);
-      return availabilityCache.get(cacheKey);
-    }
-
     console.log('Verificando disponibilidade para:', date);
     
     const response = await fetch(`/api/availability?date=${date}`);
@@ -28,10 +14,6 @@ async function checkAvailabilityForDate(date) {
     if (data.success) {
       // Processar dados do Make para calcular disponibilidade
       const processedData = processCalendarEvents(data, date);
-      
-      // Atualizar cache
-      availabilityCache.set(cacheKey, processedData);
-      lastAvailabilityCheck = now;
       
       console.log('Disponibilidade processada:', processedData);
       return processedData;
@@ -376,9 +358,6 @@ async function handleManualRefresh() {
     refreshBtn.classList.add('loading');
     refreshBtn.disabled = true;
     
-    // Limpar cache para forçar nova verificação
-    availabilityCache.delete(selectedDate);
-    
     // Atualizar horários
     await generateTimeSlots();
     
@@ -480,18 +459,8 @@ async function handleSubmit(event) {
     const bookedDate = data['meeting-date'];
     const bookedTime = data['meeting-time'];
     
-    if (availabilityCache.has(bookedDate)) {
-      const availability = availabilityCache.get(bookedDate);
-      // Remover horário dos disponíveis
-      availability.availableSlots = availability.availableSlots.filter(time => time !== bookedTime);
-      // Adicionar horário aos agendados
-      if (!availability.bookedSlots.includes(bookedTime)) {
-        availability.bookedSlots.push(bookedTime);
-      }
-      // Atualizar cache
-      availabilityCache.set(bookedDate, availability);
-      console.log('Cache atualizado após agendamento:', availability);
-    }
+    // A lógica de atualização do cache foi removida, pois não há mais variáveis de cache
+    // A geração de horários agora é feita diretamente com a chamada da API
     
     // Selecionar primeira data novamente
     const firstDateSlot = document.querySelector('.date-slot');
@@ -550,11 +519,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Adicionar evento para refresh manual dos horários
   document.getElementById('refresh-times').addEventListener('click', handleManualRefresh);
   
-  // Inicializar sistema de atualização automática
-  if (CONFIG.SYNC.autoRefresh) {
-    initializeAutoRefresh();
-  }
-  
   // Header/Footer Intelligent Logic
   const infoBadges = document.querySelectorAll('.info-badge');
   const footerToggle = document.getElementById('footer-toggle');
@@ -568,22 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const sections = ['regras', 'como-funciona', 'precos', 'pos-agendar'];
   let currentSectionIndex = 0;
-  
-  // Função para inicializar atualização automática
-  function initializeAutoRefresh() {
-    // Atualizar disponibilidade a cada intervalo configurado
-    setInterval(() => {
-      const selectedDate = document.getElementById('meeting-date').value;
-      if (selectedDate) {
-        console.log('Atualização automática de disponibilidade para:', selectedDate);
-        // Limpar cache para forçar nova verificação
-        availabilityCache.delete(selectedDate);
-        generateTimeSlots();
-      }
-    }, CONFIG.UI.refreshInterval);
-    
-    console.log('Sistema de atualização automática inicializado - intervalo:', CONFIG.UI.refreshInterval / 1000, 'segundos');
-  }
   
   // Função para mostrar/ocultar botão voltar ao topo
   function toggleBackToTop() {
