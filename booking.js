@@ -67,10 +67,37 @@ function processCalendarEvents(availabilityData, date) {
     
     // CORREÇÃO: Aplicar lógica de exclusão de horários consecutivos
     const originalSlots = availabilityData.availableSlots || [];
-    const filteredSlots = originalSlots.filter((slot, index) => {
+    
+    // 1. Filtrar horários alternados
+    const alternateSlots = originalSlots.filter((slot, index) => {
       // Manter apenas horários alternados (índices pares: 0, 2, 4, 6, 8)
       // Isso garante: 13:30, 15:30, 17:30, 19:30, 21:30
       return index % 2 === 0;
+    });
+    
+    // 2. Filtrar horários que já passaram (para o dia atual)
+    const currentDate = new Date();
+    const selectedDate = new Date(date);
+    const isToday = currentDate.toDateString() === selectedDate.toDateString();
+    
+    const filteredSlots = alternateSlots.filter(slot => {
+      if (!isToday) return true; // Se não é hoje, todos os horários estão disponíveis
+      
+      // Para hoje, verificar se o horário já passou
+      const [hour, minute] = slot.split(':').map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(hour, minute, 0, 0);
+      
+      const now = new Date();
+      const hasPassed = slotTime < now;
+      
+      if (hasPassed) {
+        console.log(`⏰ Horário ${slot} já passou (${now.toLocaleTimeString()})`);
+        return false; // Horário já passou
+      }
+      
+      console.log(`✅ Horário ${slot} ainda não chegou`);
+      return true; // Horário ainda não chegou
     });
     
     console.log('📅 Horários originais recebidos:', originalSlots);
