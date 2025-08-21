@@ -27,20 +27,19 @@ export async function onRequestGet(context) {
       }, 400, context);
     }
 
-    // Se o Make estiver configurado, consultar dados do Google Calendar
-    if (env.MAKE_AVAILABILITY_URL) {
-      console.log('🔍 Consultando Make para data:', date);
-      console.log('🔗 URL do Make:', env.MAKE_AVAILABILITY_URL);
-      
-      try {
-        // O Make deve retornar dados via GET ou POST
-        const availabilityResponse = await fetch(env.MAKE_AVAILABILITY_URL, {
-          method: 'GET', // Alterado para GET
-          headers: {
-            'Content-Type': 'application/json',
-            ...(env.MAKE_API_KEY ? { 'Authorization': `Bearer ${env.MAKE_API_KEY}` } : {})
-          }
-        });
+    // Consultar Make diretamente (URL que funcionou no teste)
+    const makeUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
+    console.log('🔍 Consultando Make para data:', date);
+    console.log('🔗 URL do Make:', makeUrl);
+    
+    try {
+      // Fazer requisição direta para o Make
+      const availabilityResponse = await fetch(makeUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
         console.log('📡 Resposta do Make - Status:', availabilityResponse.status);
         console.log('📡 Resposta do Make - OK:', availabilityResponse.ok);
@@ -68,7 +67,6 @@ export async function onRequestGet(context) {
       } catch (error) {
         console.error('💥 Erro ao consultar Make:', error);
       }
-    }
 
     // Fallback: retornar horários padrão de trabalho (para desenvolvimento)
     console.log('⚠️ Usando fallback - horários padrão de trabalho');
@@ -97,9 +95,50 @@ export async function onRequestGet(context) {
 // Função para processar dados do Make
 function processMakeData(makeData, date) {
   try {
-    // NOVO FORMATO: Aceitar dados no formato especificado
+    // FORMATO ATUAL DO MAKE: Dados com occupied.busy
+    if (makeData && makeData.occupied && makeData.occupied.busy && Array.isArray(makeData.occupied.busy)) {
+      console.log('✅ Dados recebidos do Make com formato occupied.busy:', makeData);
+      
+      const bookedSlots = [];
+      const availableSlots = [];
+      
+      // Processar horários ocupados
+      makeData.occupied.busy.forEach(slot => {
+        if (slot.start && slot.end) {
+          try {
+            const startTime = new Date(slot.start);
+            
+            // Converter para timezone local (America/Sao_Paulo)
+            const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+            
+            const hour = localStartTime.getHours();
+            const minute = localStartTime.getMinutes();
+            const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            bookedSlots.push(timeSlot);
+          } catch (error) {
+            console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
+          }
+        }
+      });
+      
+      // Gerar horários disponíveis (excluindo os ocupados)
+      const allSlots = generateDefaultTimeSlots(date);
+      availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+      
+      console.log('📅 Horários ocupados:', bookedSlots);
+      console.log('⏰ Horários disponíveis:', availableSlots);
+      
+      return {
+        availableSlots,
+        bookedSlots,
+        totalEvents: makeData.occupied.busy.length,
+        timezone: makeData.timezone || 'America/Sao_Paulo'
+      };
+    }
+    
+    // FORMATO ANTERIOR: Dados com available (para compatibilidade)
     if (makeData && makeData.available && Array.isArray(makeData.available)) {
-      console.log('✅ Dados recebidos no novo formato:', makeData);
+      console.log('✅ Dados recebidos no formato available:', makeData);
       
       // Converter horários ISO para slots de hora
       const availableSlots = [];
