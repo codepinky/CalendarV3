@@ -32,39 +32,57 @@ export async function onRequestGet(context) {
       // URL do webhook de disponibilidade (substitua pela sua URL real)
       const availabilityWebhookUrl = env.MAKE_AVAILABILITY_URL || 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
       
-      const availabilityResponse = await fetch(availabilityWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(env.MAKE_API_KEY ? { 'X-Api-Key': env.MAKE_API_KEY } : {})
-        },
-        body: JSON.stringify({ 
-          action: 'check_availability',
-          date: date,
-          timestamp: new Date().toISOString()
-        })
-      });
+      console.log('🔍 Consultando Make para data:', date);
+      console.log('🔗 URL do webhook:', availabilityWebhookUrl);
+      
+      try {
+        const availabilityResponse = await fetch(availabilityWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(env.MAKE_API_KEY ? { 'X-Api-Key': env.MAKE_API_KEY } : {})
+          },
+          body: JSON.stringify({ 
+            action: 'check_availability',
+            date: date,
+            timestamp: new Date().toISOString()
+          })
+        });
 
-      if (availabilityResponse.ok) {
-        const calendarData = await availabilityResponse.json().catch(() => ({}));
-        
-        // Retornar dados brutos do Google Calendar para o frontend processar
-        return json({
-          success: true,
-          date: date,
-          events: calendarData.events || [],
-          lastUpdated: new Date().toISOString()
-        }, 200, context);
+        console.log('📡 Resposta do Make - Status:', availabilityResponse.status);
+        console.log('📡 Resposta do Make - OK:', availabilityResponse.ok);
+
+        if (availabilityResponse.ok) {
+          const calendarData = await availabilityResponse.json().catch(() => ({}));
+          console.log('📅 Dados recebidos do Make:', calendarData);
+          
+          // Retornar dados brutos do Google Calendar para o frontend processar
+          return json({
+            success: true,
+            date: date,
+            events: calendarData.events || [],
+            lastUpdated: new Date().toISOString(),
+            source: 'Make Integration'
+          }, 200, context);
+        } else {
+          console.log('❌ Erro na resposta do Make:', availabilityResponse.status);
+          const errorText = await availabilityResponse.text().catch(() => 'Erro desconhecido');
+          console.log('❌ Detalhes do erro:', errorText);
+        }
+      } catch (error) {
+        console.error('💥 Erro ao consultar Make:', error);
       }
     }
 
     // Fallback: retornar array vazio de eventos (para desenvolvimento)
+    console.log('⚠️ Usando fallback - nenhum evento encontrado ou erro na integração');
     return json({
       success: true,
       date: date,
       events: [], // Nenhum evento por padrão
       lastUpdated: new Date().toISOString(),
-      note: 'Modo desenvolvimento - nenhum evento encontrado'
+      note: 'Modo fallback - verifique a integração com o Make',
+      source: 'Fallback Mode'
     }, 200, context);
 
   } catch (e) {

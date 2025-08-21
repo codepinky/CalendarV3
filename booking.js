@@ -279,7 +279,11 @@ async function generateTimeSlots() {
     
     // Se não há horários disponíveis
     if (availableSlots.length === 0) {
-      timeSlotsContainer.innerHTML = '<div class="no-slots">Nenhum horário disponível para esta data. Tente outra data.</div>';
+      if (availability.source === 'Fallback Mode') {
+        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
+      } else {
+        timeSlotsContainer.innerHTML = '<div class="no-slots">Nenhum horário disponível para esta data. Tente outra data.</div>';
+      }
     }
     
   } catch (error) {
