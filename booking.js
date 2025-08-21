@@ -3,6 +3,93 @@
 // Usar configurações do arquivo config.js
 const WORKING_HOURS = CONFIG.WORKING_HOURS;
 
+// Cache para disponibilidade de horários
+let availabilityCache = new Map();
+let lastAvailabilityCheck = 0;
+
+// Função para verificar disponibilidade de horários para uma data específica
+async function checkAvailabilityForDate(date) {
+  try {
+    // Verificar se já temos dados em cache e se não estão muito antigos
+    const cacheKey = date;
+    const now = Date.now();
+    
+    if (availabilityCache.has(cacheKey) && 
+        (now - lastAvailabilityCheck) < CONFIG.UI.refreshInterval) {
+      console.log('Usando dados de disponibilidade em cache para:', date);
+      return availabilityCache.get(cacheKey);
+    }
+
+    console.log('Verificando disponibilidade para:', date);
+    
+    const response = await fetch(`/api/availability?date=${date}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      // Processar eventos do Google Calendar para calcular disponibilidade
+      const processedData = processCalendarEvents(data.events, date);
+      
+      // Atualizar cache
+      availabilityCache.set(cacheKey, processedData);
+      lastAvailabilityCheck = now;
+      
+      console.log('Disponibilidade processada:', processedData);
+      return processedData;
+    } else {
+      console.error('Erro ao verificar disponibilidade:', data.reason);
+      return null;
+    }
+  } catch (error) {
+    console.error('Erro na verificação de disponibilidade:', error);
+    return null;
+  }
+}
+
+// Função para processar eventos do Google Calendar e calcular disponibilidade
+function processCalendarEvents(events, date) {
+  // Horários base do sistema (deve corresponder ao config.js)
+  const baseSlots = ["13:30", "15:30", "17:30", "19:30"];
+  const bookedSlots = [];
+  
+  // Processar eventos do Google Calendar
+  if (events && events.length > 0) {
+    events.forEach(event => {
+      if (event.start && event.start.dateTime) {
+        try {
+          // Converter para data local
+          const startTime = new Date(event.start.dateTime);
+          const hour = startTime.getHours();
+          const minute = startTime.getMinutes();
+          const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          
+          // Só incluir se for um dos horários base do sistema
+          if (baseSlots.includes(timeSlot)) {
+            bookedSlots.push(timeSlot);
+          }
+        } catch (error) {
+          console.warn('Erro ao processar evento:', event, error);
+        }
+      }
+    });
+  }
+  
+  // Filtrar horários disponíveis
+  const availableSlots = baseSlots.filter(slot => !bookedSlots.includes(slot));
+  
+  console.log('Horários base:', baseSlots);
+  console.log('Horários agendados:', bookedSlots);
+  console.log('Horários disponíveis:', availableSlots);
+  
+  return {
+    success: true,
+    date: date,
+    availableSlots: availableSlots,
+    bookedSlots: bookedSlots,
+    lastUpdated: new Date().toISOString(),
+    totalEvents: events ? events.length : 0
+  };
+}
+
 // Função para gerar as próximas datas disponíveis (8 dias)
 function generateAvailableDates() {
   const dateSelector = document.querySelector('.date-selector');
@@ -85,7 +172,7 @@ function getEndTime(startTime) {
 }
 
 // Função para gerar os horários disponíveis
-function generateTimeSlots() {
+async function generateTimeSlots() {
   const timeSlotsContainer = document.querySelector('.time-slots');
   const selectedDate = document.getElementById('meeting-date').value;
   
@@ -93,57 +180,146 @@ function generateTimeSlots() {
   
   if (!selectedDate) return;
   
-  // Limpar horários existentes
-  timeSlotsContainer.innerHTML = '';
+  // Mostrar loading
+  timeSlotsContainer.innerHTML = '<div class="loading-slots">Carregando horários disponíveis...</div>';
   
-  // Gerar horários disponíveis
-  const slots = [];
-  let currentTime = WORKING_HOURS.start;
-  
-  while (currentTime < WORKING_HOURS.end) {
-    const startHour = Math.floor(currentTime);
-    const startMinute = (currentTime % 1) * 60;
-    const endTime = currentTime + WORKING_HOURS.duration;
-    const endHour = Math.floor(endTime);
-    const endMinute = (endTime % 1) * 60;
+  try {
+    // Verificar disponibilidade para esta data
+    const availability = await checkAvailabilityForDate(selectedDate);
     
-    const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
-    const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+    if (!availability) {
+      timeSlotsContainer.innerHTML = '<div class="error-slots">Erro ao carregar horários. Tente novamente.</div>';
+      return;
+    }
     
-    slots.push({
-      start: startTimeStr,
-      end: endTimeStr,
-      value: startTimeStr
+    // Limpar loading
+    timeSlotsContainer.innerHTML = '';
+    
+    // Gerar todos os horários possíveis
+    const allSlots = [];
+    let currentTime = WORKING_HOURS.start;
+    
+    while (currentTime < WORKING_HOURS.end) {
+      const startHour = Math.floor(currentTime);
+      const startMinute = (currentTime % 1) * 60;
+      const endTime = currentTime + WORKING_HOURS.duration;
+      const endHour = Math.floor(endTime);
+      const endMinute = (endTime % 1) * 60;
+      
+      const startTimeStr = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+      const endTimeStr = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+      
+      allSlots.push({
+        start: startTimeStr,
+        end: endTimeStr,
+        value: startTimeStr
+      });
+      
+      currentTime += WORKING_HOURS.interval;
+    }
+    
+    // Filtrar horários disponíveis vs. agendados
+    const availableSlots = allSlots.filter(slot => 
+      availability.availableSlots.includes(slot.start)
+    );
+    
+    const bookedSlots = allSlots.filter(slot => 
+      availability.bookedSlots.includes(slot.start)
+    );
+    
+    console.log('Horários disponíveis:', availableSlots.map(s => s.start));
+    console.log('Horários agendados:', bookedSlots.map(s => s.start));
+    
+    // Criar elementos HTML para horários disponíveis
+    availableSlots.forEach(slot => {
+      const timeSlot = document.createElement('div');
+      timeSlot.className = 'time-slot available';
+      timeSlot.dataset.time = slot.value;
+      
+      timeSlot.innerHTML = `
+        <span class="time-start">${slot.start} - ${slot.end}</span>
+        <span class="time-duration">1 hora de atendimento</span>
+        <span class="time-available">Horário Disponível</span>
+      `;
+      
+      // Adicionar evento de clique
+      timeSlot.addEventListener('click', () => {
+        // Remover seleção anterior
+        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+        // Selecionar este horário
+        timeSlot.classList.add('selected');
+        // Atualizar campo hidden com apenas o horário de início
+        document.getElementById('meeting-time').value = slot.start;
+        console.log('Horário selecionado:', slot.start);
+      });
+      
+      timeSlotsContainer.appendChild(timeSlot);
     });
     
-    currentTime += WORKING_HOURS.interval;
+    // Criar elementos HTML para horários agendados (se configurado para mostrar)
+    if (CONFIG.SYNC.showBookedSlots) {
+      bookedSlots.forEach(slot => {
+        const timeSlot = document.createElement('div');
+        timeSlot.className = 'time-slot booked';
+        timeSlot.dataset.time = slot.value;
+        
+        timeSlot.innerHTML = `
+          <span class="time-start">${slot.start} - ${slot.end}</span>
+          <span class="time-duration">1 hora de atendimento</span>
+          <span class="time-booked">Horário Agendado</span>
+        `;
+        
+        // Não adicionar evento de clique para horários agendados
+        timeSlot.style.cursor = 'not-allowed';
+        timeSlot.style.opacity = '0.6';
+        
+        timeSlotsContainer.appendChild(timeSlot);
+      });
+    }
+    
+    // Se não há horários disponíveis
+    if (availableSlots.length === 0) {
+      timeSlotsContainer.innerHTML = '<div class="no-slots">Nenhum horário disponível para esta data. Tente outra data.</div>';
+    }
+    
+  } catch (error) {
+    console.error('Erro ao gerar horários:', error);
+    timeSlotsContainer.innerHTML = '<div class="error-slots">Erro ao carregar horários. Tente novamente.</div>';
+  }
+}
+
+// Função para lidar com refresh manual dos horários
+async function handleManualRefresh() {
+  const refreshBtn = document.getElementById('refresh-times');
+  const selectedDate = document.getElementById('meeting-date').value;
+  
+  if (!selectedDate) {
+    showResult('info', 'Selecione uma data primeiro para atualizar os horários.');
+    return;
   }
   
-  // Criar elementos HTML para cada horário
-  slots.forEach(slot => {
-    const timeSlot = document.createElement('div');
-    timeSlot.className = 'time-slot';
-    timeSlot.dataset.time = slot.value;
+  try {
+    // Adicionar estado de loading ao botão
+    refreshBtn.classList.add('loading');
+    refreshBtn.disabled = true;
     
-    timeSlot.innerHTML = `
-      <span class="time-start">${slot.start} - ${slot.end}</span>
-      <span class="time-duration">1 hora de atendimento</span>
-      <span class="time-available">Horário Disponível</span>
-    `;
+    // Limpar cache para forçar nova verificação
+    availabilityCache.delete(selectedDate);
     
-    // Adicionar evento de clique
-    timeSlot.addEventListener('click', () => {
-      // Remover seleção anterior
-      document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-      // Selecionar este horário
-      timeSlot.classList.add('selected');
-      // Atualizar campo hidden com apenas o horário de início
-      document.getElementById('meeting-time').value = slot.start;
-      console.log('Horário selecionado:', slot.start);
-    });
+    // Atualizar horários
+    await generateTimeSlots();
     
-    timeSlotsContainer.appendChild(timeSlot);
-  });
+    // Mostrar mensagem de sucesso
+    showResult('success', 'Horários atualizados com sucesso!');
+    
+  } catch (error) {
+    console.error('Erro no refresh manual:', error);
+    showResult('error', 'Erro ao atualizar horários. Tente novamente.');
+  } finally {
+    // Remover estado de loading
+    refreshBtn.classList.remove('loading');
+    refreshBtn.disabled = false;
+  }
 }
 
 // Função para lidar com o envio do formulário
@@ -227,6 +403,23 @@ async function handleSubmit(event) {
       el.classList.remove('selected');
     });
     
+    // Marcar horário como indisponível no cache local
+    const bookedDate = data['meeting-date'];
+    const bookedTime = data['meeting-time'];
+    
+    if (availabilityCache.has(bookedDate)) {
+      const availability = availabilityCache.get(bookedDate);
+      // Remover horário dos disponíveis
+      availability.availableSlots = availability.availableSlots.filter(time => time !== bookedTime);
+      // Adicionar horário aos agendados
+      if (!availability.bookedSlots.includes(bookedTime)) {
+        availability.bookedSlots.push(bookedTime);
+      }
+      // Atualizar cache
+      availabilityCache.set(bookedDate, availability);
+      console.log('Cache atualizado após agendamento:', availability);
+    }
+    
     // Selecionar primeira data novamente
     const firstDateSlot = document.querySelector('.date-slot');
     if (firstDateSlot) {
@@ -281,6 +474,14 @@ document.addEventListener('DOMContentLoaded', function() {
   // Adicionar evento para envio do formulário
   document.getElementById('booking-form').addEventListener('submit', handleSubmit);
   
+  // Adicionar evento para refresh manual dos horários
+  document.getElementById('refresh-times').addEventListener('click', handleManualRefresh);
+  
+  // Inicializar sistema de atualização automática
+  if (CONFIG.SYNC.autoRefresh) {
+    initializeAutoRefresh();
+  }
+  
   // Header/Footer Intelligent Logic
   const infoBadges = document.querySelectorAll('.info-badge');
   const footerToggle = document.getElementById('footer-toggle');
@@ -294,6 +495,22 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const sections = ['regras', 'como-funciona', 'precos', 'pos-agendar'];
   let currentSectionIndex = 0;
+  
+  // Função para inicializar atualização automática
+  function initializeAutoRefresh() {
+    // Atualizar disponibilidade a cada intervalo configurado
+    setInterval(() => {
+      const selectedDate = document.getElementById('meeting-date').value;
+      if (selectedDate) {
+        console.log('Atualização automática de disponibilidade para:', selectedDate);
+        // Limpar cache para forçar nova verificação
+        availabilityCache.delete(selectedDate);
+        generateTimeSlots();
+      }
+    }, CONFIG.UI.refreshInterval);
+    
+    console.log('Sistema de atualização automática inicializado - intervalo:', CONFIG.UI.refreshInterval / 1000, 'segundos');
+  }
   
   // Função para mostrar/ocultar botão voltar ao topo
   function toggleBackToTop() {

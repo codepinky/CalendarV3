@@ -277,15 +277,60 @@ h1 {
   margin-bottom: 24px;
 }
 
+.time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
 .time-selector label {
   display: block;
-  margin-bottom: 12px;
   font-size: 13px;
   color: #ffffff;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #63b3ed, #9f7aea);
+  border: 0;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(99, 179, 237, 0.3);
+}
+
+.refresh-btn:hover {
+  transform: rotate(180deg) scale(1.1);
+  box-shadow: 0 4px 15px rgba(99, 179, 237, 0.5);
+}
+
+.refresh-btn:active {
+  transform: rotate(180deg) scale(0.95);
+}
+
+.refresh-btn.loading {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .time-slots {
@@ -293,6 +338,55 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 10px;
   max-width: 100%;
+}
+
+/* Estados de loading e erro */
+.loading-slots,
+.error-slots,
+.no-slots {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+.loading-slots {
+  color: #63b3ed;
+  border-color: rgba(99, 179, 237, 0.4);
+  animation: pulse 2s infinite;
+}
+
+.error-slots {
+  color: #fc8181;
+  border-color: rgba(252, 129, 129, 0.4);
+  background: linear-gradient(135deg, 
+    rgba(252, 129, 129, 0.1) 0%, 
+    rgba(252, 129, 129, 0.05) 100%);
+}
+
+.no-slots {
+  color: #f6ad55;
+  border-color: rgba(246, 173, 85, 0.4);
+  background: linear-gradient(135deg, 
+    rgba(246, 173, 85, 0.1) 0%, 
+    rgba(246, 173, 85, 0.05) 100%);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .time-slot {
@@ -322,6 +416,50 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+/* Estado disponível (padrão) */
+.time-slot.available {
+  border-color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+/* Estado agendado/indisponível */
+.time-slot.booked {
+  background: linear-gradient(135deg, 
+    rgba(252, 129, 129, 0.2) 0%, 
+    rgba(252, 129, 129, 0.1) 100%);
+  border-color: rgba(252, 129, 129, 0.4);
+  cursor: not-allowed;
+  opacity: 0.7;
+  position: relative;
+}
+
+.time-slot.booked::after {
+  content: '✗';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: rgba(252, 129, 129, 0.8);
+  font-weight: bold;
+  z-index: 2;
+}
+
+.time-slot.booked .time-start,
+.time-slot.booked .time-duration {
+  opacity: 0.5;
+}
+
+.time-slot.booked .time-booked {
+  color: #fc8181;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(252, 129, 129, 0.2);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(252, 129, 129, 0.4);
+}
+
 .time-slot::before {
   content: '';
   position: absolute;
@@ -335,7 +473,7 @@ h1 {
   border-radius: 12px 12px 0 0;
 }
 
-.time-slot:hover {
+.time-slot:hover:not(.booked) {
   border-color: #9f7aea;
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.15) 0%, 
@@ -347,7 +485,7 @@ h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-.time-slot:hover::before {
+.time-slot:hover:not(.booked)::before {
   transform: scaleX(1);
   border-radius: 12px 12px 0 0;
 }

@@ -3,6 +3,7 @@ const CONFIG = {
   // Nota: As URLs do Make estão configuradas no Cloudflare Pages Functions
   // /api/booking - Para envio de agendamentos
   // /api/verify - Para verificação de emails
+  // /api/availability - Para verificar disponibilidade de horários
   
   // Configurações dos horários de trabalho
   WORKING_HOURS: {
@@ -16,7 +17,8 @@ const CONFIG = {
   UI: {
     maxDates: 8, // Máximo de datas para mostrar
     resultTimeout: 5000, // Tempo para auto-remover mensagens (ms)
-    animationDuration: 300 // Duração das animações (ms)
+    animationDuration: 300, // Duração das animações (ms)
+    refreshInterval: 30000 // Intervalo para atualizar disponibilidade (30 segundos)
   },
   
   // Configurações de validação
@@ -25,6 +27,13 @@ const CONFIG = {
     maxAge: 100,
     phoneRegex: /^\(\d{2}\)\s\d{4,5}-\d{4}$/, // Formato: (11) 99999-9999
     emailRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  },
+  
+  // Configurações de sincronização
+  SYNC: {
+    checkAvailabilityOnLoad: true, // Verificar disponibilidade ao carregar
+    autoRefresh: true, // Atualizar automaticamente
+    showBookedSlots: false // Se deve mostrar slots agendados como indisponíveis
   }
 };
 
