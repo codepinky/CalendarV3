@@ -68,9 +68,37 @@ function processCalendarEvents(availabilityData, date) {
       }
     });
     
-    // Gerar horários disponíveis (excluindo os ocupados)
+    // Gerar horários disponíveis (excluindo os ocupados E seus consecutivos)
     const allSlots = generateDefaultTimeSlots(date);
-    availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+    availableSlots = allSlots.filter(slot => {
+      // Verificar se este horário está ocupado
+      if (bookedSlots.includes(slot)) {
+        console.log(`❌ Horário ${slot} está ocupado`);
+        return false; // Está ocupado
+      }
+      
+      // CORREÇÃO: Verificar se o horário ANTERIOR está ocupado (para evitar conflito)
+      const [hour, minute] = slot.split(':').map(Number);
+      const previousHour = hour - 1;
+      const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
+      
+      if (bookedSlots.includes(previousSlot)) {
+        console.log(`❌ Horário ${slot} não disponível - anterior ${previousSlot} está ocupado`);
+        return false; // Não disponível por conflito
+      }
+      
+      // CORREÇÃO: Verificar se o horário POSTERIOR está ocupado (para evitar conflito)
+      const nextHour = hour + 1;
+      const nextSlot = `${nextHour.toString().padStart(2, '0')}:30`;
+      
+      if (bookedSlots.includes(nextSlot)) {
+        console.log(`❌ Horário ${slot} não disponível - posterior ${nextSlot} está ocupado`);
+        return false; // Não disponível por conflito
+      }
+      
+      console.log(`✅ Horário ${slot} está disponível`);
+      return true; // Está disponível
+    });
     
     console.log('📅 Horários ocupados:', bookedSlots);
     console.log('⏰ Horários disponíveis:', availableSlots);
