@@ -31,6 +31,9 @@ export async function onRequestGet(context) {
     const makeUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
     console.log('🔍 Consultando Make para data:', date);
     console.log('🔗 URL do Make:', makeUrl);
+    console.log('🔍 Data enviada para Make (formato):', date);
+    console.log('🔍 Data enviada para Make (objeto):', new Date(date));
+    console.log('🔍 Data enviada para Make (ISO):', new Date(date).toISOString());
     
     try {
       // Fazer requisição direta para o Make
