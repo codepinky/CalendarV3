@@ -100,7 +100,7 @@ function processMakeData(makeData, date) {
       console.log('✅ Dados recebidos do Make com formato occupied.busy:', makeData);
       
       const bookedSlots = [];
-      const availableSlots = [];
+      let availableSlots = [];
       
       // Processar horários ocupados
       makeData.occupied.busy.forEach(slot => {
@@ -141,7 +141,7 @@ function processMakeData(makeData, date) {
       console.log('✅ Dados recebidos no formato available:', makeData);
       
       // Converter horários ISO para slots de hora
-      const availableSlots = [];
+      let availableSlots = [];
       const bookedSlots = [];
       
       // Processar horários disponíveis
