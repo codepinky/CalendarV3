@@ -270,7 +270,7 @@ function getEndTime(startTime) {
 // Função para gerar os horários disponíveis
 async function generateTimeSlots() {
   const timeSlotsContainer = document.querySelector('.time-slots');
-  const selectedDate = document.getElementById('meeting-date').value;
+  const selectedDate = document.getElementById('date').value;
   
   console.log('generateTimeSlots - Data selecionada:', selectedDate);
   
