@@ -47,6 +47,20 @@ async function checkAvailabilityForDate(date) {
 
 // Função para processar dados de disponibilidade do Make
 function processCalendarEvents(availabilityData, date) {
+  // Verificar se os dados são válidos
+  if (!availabilityData) {
+    console.log('⚠️ Dados do Make são undefined, usando fallback padrão');
+    return {
+      success: true,
+      date: date,
+      availableSlots: generateDefaultTimeSlots(date),
+      bookedSlots: [],
+      lastUpdated: new Date().toISOString(),
+      totalEvents: 0,
+      source: 'Fallback - Dados Make undefined'
+    };
+  }
+
   // NOVO FORMATO: Se vier do Make com wrapper busy
   if (availabilityData && availabilityData.occupied && availabilityData.occupied.busy) {
     console.log('✅ Dados recebidos do Make com wrapper busy:', availabilityData);
@@ -133,7 +147,7 @@ function processCalendarEvents(availabilityData, date) {
   return {
     success: true,
     date: date,
-    availableSlots: availabilityData.availableSlots || [],
+    availableSlots: availabilityData.availableSlots || generateDefaultTimeSlots(date),
     bookedSlots: bookedSlots,
     lastUpdated: new Date().toISOString(),
     totalEvents: availabilityData.totalEvents || 0,
