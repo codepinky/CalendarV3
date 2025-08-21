@@ -26,8 +26,8 @@ async function checkAvailabilityForDate(date) {
     const data = await response.json();
     
     if (data.success) {
-      // Processar eventos do Google Calendar para calcular disponibilidade
-      const processedData = processCalendarEvents(data.events, date);
+      // Processar dados do Make para calcular disponibilidade
+      const processedData = processCalendarEvents(data, date);
       
       // Atualizar cache
       availabilityCache.set(cacheKey, processedData);
