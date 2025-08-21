@@ -421,8 +421,11 @@ async function handleSubmit(event) {
     submitBtn.textContent = 'Enviando...';
     
     // Debug: verificar campos hidden antes do FormData
-          console.log('Campo date antes do FormData:', document.getElementById('date').value);
-    console.log('Campo time antes do FormData:', document.getElementById('meeting-time').value);
+    console.log('🔍 DEBUG - Campo date antes do FormData:', document.getElementById('date').value);
+    console.log('🔍 DEBUG - Campo time antes do FormData:', document.getElementById('meeting-time').value);
+    console.log('🔍 DEBUG - Elemento date existe?', !!document.getElementById('date'));
+    console.log('🔍 DEBUG - Elemento date ID:', document.getElementById('date')?.id);
+    console.log('🔍 DEBUG - Elemento date name:', document.getElementById('date')?.name);
     
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
@@ -500,7 +503,7 @@ async function handleSubmit(event) {
     const firstDateSlot = document.querySelector('.date-slot');
     if (firstDateSlot) {
       firstDateSlot.classList.add('selected');
-      document.getElementById('date').value = firstDateSlot.dataset.date;
+      // NÃO sobrescrever o campo date aqui - deixar como está
       generateTimeSlots();
     }
     
