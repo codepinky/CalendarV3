@@ -432,24 +432,27 @@ async function handleSubmit(event) {
     console.log('🔍 DEBUG - Elemento date ID:', document.getElementById('date')?.id);
     console.log('🔍 DEBUG - Elemento date name:', document.getElementById('date')?.name);
     
-    // CORREÇÃO: Forçar atualização do campo date antes de capturar dados
+    // SOLUÇÃO DEFINITIVA: Usar o mesmo valor que funciona na verificação de disponibilidade
     const selectedDateSlot = document.querySelector('.date-slot.selected');
     if (selectedDateSlot) {
       const selectedDate = selectedDateSlot.dataset.date;
-      document.getElementById('date').value = selectedDate;
-      console.log('🔧 CORREÇÃO - Campo date atualizado para:', selectedDate);
+      console.log('🎯 SOLUÇÃO - Data selecionada visualmente:', selectedDate);
+      
+      // Criar dados manualmente em vez de usar FormData
+      const data = {
+        date: selectedDate,
+        'meeting-time': document.getElementById('meeting-time').value,
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        duration: document.getElementById('duration').value,
+        reason: document.getElementById('reason').value
+      };
+      
+      console.log('🎯 SOLUÇÃO - Dados capturados manualmente:', data);
+    } else {
+      throw new Error('Nenhuma data selecionada. Por favor, selecione uma data.');
     }
-    
-    const formData = new FormData(event.target);
-    const data = Object.fromEntries(formData);
-    
-    // Debug: ver o que está sendo capturado
-    console.log('Dados capturados do formulário:', data);
-          console.log('Data selecionada:', data['date']);
-    console.log('Horário selecionado:', data['meeting-time']);
-    console.log('Nome:', data.name);
-    console.log('Email:', data.email);
-    console.log('Telefone:', data.phone);
     
     // Validações básicas
     if (!data['date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
