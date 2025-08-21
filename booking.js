@@ -242,9 +242,9 @@ function generateAvailableDates() {
       // Selecionar esta data
       dateSlot.classList.add('selected');
       // Atualizar campo hidden
-      document.getElementById('meeting-date').value = date;
+      document.getElementById('date').value = date;
       console.log('Data selecionada:', date);
-      console.log('Campo date após atualização:', document.getElementById('meeting-date').value);
+      console.log('Campo date após atualização:', document.getElementById('date').value);
       // Gerar horários para esta data
       generateTimeSlots();
     });
@@ -254,7 +254,7 @@ function generateAvailableDates() {
     // Selecionar a primeira data por padrão
     if (index === 0) {
       dateSlot.classList.add('selected');
-      document.getElementById('meeting-date').value = date;
+      document.getElementById('date').value = date;
       console.log('Data padrão selecionada:', date);
     }
   });
@@ -380,7 +380,7 @@ async function generateTimeSlots() {
 // Função para lidar com refresh manual dos horários
 async function handleManualRefresh() {
   const refreshBtn = document.getElementById('refresh-times');
-  const selectedDate = document.getElementById('meeting-date').value;
+  const selectedDate = document.getElementById('date').value;
   
   if (!selectedDate) {
     showResult('info', 'Selecione uma data primeiro para atualizar os horários.');
@@ -421,7 +421,7 @@ async function handleSubmit(event) {
     submitBtn.textContent = 'Enviando...';
     
     // Debug: verificar campos hidden antes do FormData
-    console.log('Campo date antes do FormData:', document.getElementById('meeting-date').value);
+          console.log('Campo date antes do FormData:', document.getElementById('date').value);
     console.log('Campo time antes do FormData:', document.getElementById('meeting-time').value);
     
     const formData = new FormData(event.target);
@@ -429,16 +429,16 @@ async function handleSubmit(event) {
     
     // Debug: ver o que está sendo capturado
     console.log('Dados capturados do formulário:', data);
-    console.log('Data selecionada:', data['meeting-date']);
+          console.log('Data selecionada:', data['date']);
     console.log('Horário selecionado:', data['meeting-time']);
     console.log('Nome:', data.name);
     console.log('Email:', data.email);
     console.log('Telefone:', data.phone);
     
     // Validações básicas
-    if (!data['meeting-date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
+    if (!data['date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
       console.log('Campos faltando:');
-      if (!data['meeting-date']) console.log('- Data não selecionada');
+      if (!data['date']) console.log('- Data não selecionada');
       if (!data['meeting-time']) console.log('- Horário não selecionado');
       if (!data.name) console.log('- Nome não preenchido');
       if (!data.email) console.log('- Email não preenchido');
@@ -448,9 +448,9 @@ async function handleSubmit(event) {
     
     // Formatar dados para o Make (formato que a API espera)
     const makeData = {
-      date: data['meeting-date'],
+              date: data['date'],
       time: data['meeting-time'],
-      datetime: `${data['meeting-date']}T${data['meeting-time']}:00`,
+              datetime: `${data['date']}T${data['meeting-time']}:00`,
       name: data.name,
       email: data.email,
       phone: data.phone,
@@ -490,7 +490,7 @@ async function handleSubmit(event) {
     });
     
     // Marcar horário como indisponível no cache local
-    const bookedDate = data['meeting-date'];
+    const bookedDate = data['date'];
     const bookedTime = data['meeting-time'];
     
     // A lógica de atualização do cache foi removida, pois não há mais variáveis de cache
@@ -500,7 +500,7 @@ async function handleSubmit(event) {
     const firstDateSlot = document.querySelector('.date-slot');
     if (firstDateSlot) {
       firstDateSlot.classList.add('selected');
-      document.getElementById('meeting-date').value = firstDateSlot.dataset.date;
+      document.getElementById('date').value = firstDateSlot.dataset.date;
       generateTimeSlots();
     }
     
@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function() {
   generateAvailableDates();
   
   // Adicionar evento para mudança de data
-  document.getElementById('meeting-date').addEventListener('change', generateTimeSlots);
+      document.getElementById('date').addEventListener('change', generateTimeSlots);
   
   // Adicionar evento para envio do formulário
   document.getElementById('booking-form').addEventListener('submit', handleSubmit);
