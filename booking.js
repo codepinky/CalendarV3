@@ -432,6 +432,14 @@ async function handleSubmit(event) {
     console.log('🔍 DEBUG - Elemento date ID:', document.getElementById('date')?.id);
     console.log('🔍 DEBUG - Elemento date name:', document.getElementById('date')?.name);
     
+    // CORREÇÃO: Forçar atualização do campo date antes de capturar dados
+    const selectedDateSlot = document.querySelector('.date-slot.selected');
+    if (selectedDateSlot) {
+      const selectedDate = selectedDateSlot.dataset.date;
+      document.getElementById('date').value = selectedDate;
+      console.log('🔧 CORREÇÃO - Campo date atualizado para:', selectedDate);
+    }
+    
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
     
