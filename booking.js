@@ -243,8 +243,11 @@ function generateAvailableDates() {
       dateSlot.classList.add('selected');
       // Atualizar campo hidden
       document.getElementById('date').value = date;
-      console.log('Data selecionada:', date);
-      console.log('Campo date após atualização:', document.getElementById('date').value);
+      console.log('🎯 CLIQUE NA DATA - Data selecionada:', date);
+      console.log('🎯 CLIQUE NA DATA - Campo date após atualização:', document.getElementById('date').value);
+      console.log('🎯 CLIQUE NA DATA - Elemento date existe?', !!document.getElementById('date'));
+      console.log('🎯 CLIQUE NA DATA - Elemento date ID:', document.getElementById('date')?.id);
+      console.log('🎯 CLIQUE NA DATA - Elemento date name:', document.getElementById('date')?.name);
       // Gerar horários para esta data
       generateTimeSlots();
     });
@@ -255,7 +258,9 @@ function generateAvailableDates() {
     if (index === 0) {
       dateSlot.classList.add('selected');
       document.getElementById('date').value = date;
-      console.log('Data padrão selecionada:', date);
+      console.log('🎯 DATA PADRÃO - Data selecionada:', date);
+      console.log('🎯 DATA PADRÃO - Campo date após atualização:', document.getElementById('date').value);
+      console.log('🎯 DATA PADRÃO - Elemento date existe?', !!document.getElementById('date'));
     }
   });
 }
@@ -484,8 +489,14 @@ async function handleSubmit(event) {
     // Sucesso!
     showResult('success', result.message || 'Agendamento enviado com sucesso! Entraremos em contato para confirmar.');
     
+    // Debug: verificar campo date antes do reset
+    console.log('🔍 ANTES DO RESET - Campo date:', document.getElementById('date').value);
+    
     // Limpar formulário
     event.target.reset();
+    
+    // Debug: verificar campo date após o reset
+    console.log('🔍 APÓS DO RESET - Campo date:', document.getElementById('date').value);
     
     // Resetar seleções visuais
     document.querySelectorAll('.date-slot.selected, .time-slot.selected').forEach(el => {
