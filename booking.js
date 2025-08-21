@@ -78,10 +78,29 @@ function processCalendarEvents(availabilityData, date) {
     // 2. Filtrar horários que já passaram (para o dia atual)
     const currentDate = new Date();
     const selectedDate = new Date(date);
-    const isToday = currentDate.toDateString() === selectedDate.toDateString();
+    
+    // CORREÇÃO: Comparação mais robusta de datas
+    const currentDay = currentDate.getDate();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    const selectedDay = selectedDate.getDate();
+    const selectedMonth = selectedDate.getMonth();
+    const selectedYear = selectedDate.getFullYear();
+    
+    const isToday = (currentDay === selectedDay) && 
+                   (currentMonth === selectedMonth) && 
+                   (currentYear === selectedYear);
+    
+    console.log(`📅 Data atual: ${currentDate.toLocaleDateString()}`);
+    console.log(`📅 Data selecionada: ${selectedDate.toLocaleDateString()}`);
+    console.log(`📅 É hoje? ${isToday}`);
     
     const filteredSlots = alternateSlots.filter(slot => {
-      if (!isToday) return true; // Se não é hoje, todos os horários estão disponíveis
+      if (!isToday) {
+        console.log(`✅ Data ${date} não é hoje - todos os horários disponíveis`);
+        return true; // Se não é hoje, todos os horários estão disponíveis
+      }
       
       // Para hoje, verificar se o horário já passou
       const [hour, minute] = slot.split(':').map(Number);
