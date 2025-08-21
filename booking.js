@@ -47,71 +47,17 @@ function processCalendarEvents(availabilityData, date) {
   if (availabilityData && availabilityData.occupied && availabilityData.occupied.busy) {
     console.log('✅ Dados recebidos do Make com wrapper busy:', availabilityData);
     
-    const bookedSlots = [];
-    const availableSlots = [];
-    
-    // Processar horários ocupados
-    availabilityData.occupied.busy.forEach(slot => {
-      if (slot.start && slot.end) {
-        try {
-          const startTime = new Date(slot.start);
-          const localStartTime = new Date(startTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-          
-          const hour = localStartTime.getHours();
-          const minute = localStartTime.getMinutes();
-          // Formatar para o padrão HH:30 (mesmo padrão do backend)
-          const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
-          bookedSlots.push(timeSlot);
-        } catch (error) {
-          console.warn('⚠️ Erro ao processar slot ocupado:', slot, error);
-        }
-      }
-    });
-    
-    // Gerar horários disponíveis (excluindo os ocupados E seus consecutivos)
-    const allSlots = generateDefaultTimeSlots(date);
-    availableSlots = allSlots.filter(slot => {
-      // Verificar se este horário está ocupado
-      if (bookedSlots.includes(slot)) {
-        console.log(`❌ Horário ${slot} está ocupado`);
-        return false; // Está ocupado
-      }
-      
-      // CORREÇÃO: Verificar se o horário ANTERIOR está ocupado (para evitar conflito)
-      const [hour, minute] = slot.split(':').map(Number);
-      const previousHour = hour - 1;
-      const previousSlot = `${previousHour.toString().padStart(2, '0')}:30`;
-      
-      if (bookedSlots.includes(previousSlot)) {
-        console.log(`❌ Horário ${slot} não disponível - anterior ${previousSlot} está ocupado`);
-        return false; // Não disponível por conflito
-      }
-      
-      // CORREÇÃO: Verificar se o horário POSTERIOR está ocupado (para evitar conflito)
-      const nextHour = hour + 1;
-      const nextSlot = `${nextHour.toString().padStart(2, '0')}:30`;
-      
-      if (bookedSlots.includes(nextSlot)) {
-        console.log(`❌ Horário ${slot} não disponível - posterior ${nextSlot} está ocupado`);
-        return false; // Não disponível por conflito
-      }
-      
-      console.log(`✅ Horário ${slot} está disponível`);
-      return true; // Está disponível
-    });
-    
-    console.log('📅 Horários ocupados:', bookedSlots);
-    console.log('⏰ Horários disponíveis:', availableSlots);
-    
+    // CORREÇÃO: Usar diretamente os dados processados pelo backend
+    // NÃO reprocessar - o backend já fez todo o trabalho!
     return {
       success: true,
       date: date,
-      availableSlots,
-      bookedSlots,
+      availableSlots: availabilityData.availableSlots || [],
+      bookedSlots: availabilityData.bookedSlots || [],
       lastUpdated: new Date().toISOString(),
       totalEvents: availabilityData.occupied.busy.length,
       timezone: availabilityData.timezone || 'America/Sao_Paulo',
-      source: 'Make Integration (Busy Format)'
+      source: 'Make Integration (Backend Processed)'
     };
   }
   
