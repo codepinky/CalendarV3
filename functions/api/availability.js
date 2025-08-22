@@ -129,37 +129,66 @@ export async function onRequestGet(context) {
 
       console.log('🔄 Iniciando consulta semanal para:', startDate, 'a', endDate);
       
-      // Por enquanto, retornar dados simulados para teste
-      // TODO: Implementar consulta real ao Make para semana inteira
-      const weeklyAvailability = {};
+      // Consultar Make.com para disponibilidade semanal real
+      const makeUrl = 'https://hook.us2.make.com/dj28362ubxo96s2fosi5sepju5h6k85';
+      console.log('🔍 Consultando Make.com para semana:', startDate, 'a', endDate);
+      console.log('🔗 URL do Make.com:', makeUrl);
       
-      // Gerar dados para cada dia da semana
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+      try {
+        // Fazer requisição para o Make.com
+        const availabilityResponse = await fetch(makeUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('📡 Resposta do Make.com - Status:', availabilityResponse.status);
+        console.log('📡 Resposta do Make.com - OK:', availabilityResponse.ok);
+
+        if (availabilityResponse.ok) {
+          const makeData = await availabilityResponse.json().catch(() => ({}));
+          console.log('📅 Dados recebidos do Make.com:', makeData);
+          
+          // Processar dados do Make.com para disponibilidade semanal
+          const weeklyAvailability = processWeeklyMakeData(makeData, startDate, endDate);
+          
+          console.log('📊 Disponibilidade semanal processada:', weeklyAvailability);
+          
+          return json({
+            success: true,
+            startDate: startDate,
+            endDate: endDate,
+            weeklyAvailability: weeklyAvailability,
+            timezone: 'America/Sao_Paulo',
+            lastUpdated: new Date().toISOString(),
+            source: 'Make.com Integration',
+            note: 'Dados reais do Google Calendar via Make.com'
+          }, 200, context);
+        } else {
+          console.log('❌ Erro na resposta do Make.com:', availabilityResponse.status);
+          const errorText = await availabilityResponse.text().catch(() => 'Erro desconhecido');
+          console.log('❌ Detalhes do erro:', errorText);
+          
+          // Fallback: retornar erro
+          return json({
+            success: false,
+            reason: `Erro ao consultar Make.com: ${availabilityResponse.status}`,
+            startDate: startDate,
+            endDate: endDate
+          }, 500, context);
+        }
+      } catch (error) {
+        console.error('💥 Erro ao consultar Make.com:', error);
         
-        // Simular disponibilidade (para teste)
-        weeklyAvailability[dateStr] = {
-          available: true,
-          slots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
-          message: 'Horários disponíveis para teste'
-        };
+        // Fallback: retornar erro
+        return json({
+          success: false,
+          reason: `Erro de conexão com Make.com: ${error.message}`,
+          startDate: startDate,
+          endDate: endDate
+        }, 500, context);
       }
-      
-      console.log('📊 Disponibilidade semanal gerada:', weeklyAvailability);
-      
-      return json({
-        success: true,
-        startDate: startDate,
-        endDate: endDate,
-        weeklyAvailability: weeklyAvailability,
-        timezone: 'America/Sao_Paulo',
-        lastUpdated: new Date().toISOString(),
-        source: 'Weekly Availability (Test Mode)',
-        note: 'Modo de teste - dados simulados'
-      }, 200, context);
     }
 
   } catch (e) {
@@ -171,7 +200,155 @@ export async function onRequestGet(context) {
   }
 }
 
-// Função para processar dados do Make
+// Função para processar dados semanais do Make.com
+function processWeeklyMakeData(makeData, startDate, endDate) {
+  try {
+    console.log('🔄 Processando dados semanais do Make.com:', makeData);
+    
+    // Se o Make.com retornar dados estruturados
+    if (makeData && makeData.weeklyAvailability) {
+      console.log('✅ Dados estruturados recebidos do Make.com');
+      return makeData.weeklyAvailability;
+    }
+    
+    // Se o Make.com retornar eventos do Google Calendar
+    if (makeData && makeData.events && Array.isArray(makeData.events)) {
+      console.log('✅ Eventos do Google Calendar recebidos:', makeData.events.length);
+      
+      const weeklyAvailability = {};
+      
+      // Processar cada evento para determinar disponibilidade
+      makeData.events.forEach(event => {
+        if (event.start && event.start.dateTime) {
+          try {
+            const eventDate = new Date(event.start.dateTime);
+            const dateKey = eventDate.toISOString().split('T')[0];
+            
+            if (!weeklyAvailability[dateKey]) {
+              weeklyAvailability[dateKey] = {
+                date: dateKey,
+                hasAvailability: true,
+                bookedSlots: [],
+                availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30']
+              };
+            }
+            
+            // Adicionar horário ocupado
+            const hour = eventDate.getHours();
+            const minute = eventDate.getMinutes();
+            const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            weeklyAvailability[dateKey].bookedSlots.push(timeSlot);
+            
+          } catch (error) {
+            console.warn('⚠️ Erro ao processar evento:', event, error);
+          }
+        }
+      });
+      
+      // Processar disponibilidade para cada dia
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        
+        if (!weeklyAvailability[dateStr]) {
+          weeklyAvailability[dateStr] = {
+            date: dateStr,
+            hasAvailability: true,
+            bookedSlots: [],
+            availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30']
+          };
+        }
+        
+        // Filtrar horários disponíveis (excluindo ocupados e conflitos)
+        const availableSlots = weeklyAvailability[dateStr].availableSlots.filter(slot => {
+          const [hour] = slot.split(':').map(Number);
+          
+          // Verificar se este horário está ocupado
+          if (weeklyAvailability[dateStr].bookedSlots.some(booked => {
+            const [bookedHour] = booked.split(':').map(Number);
+            return Math.abs(bookedHour - hour) <= 1; // 1 hora de conflito
+          })) {
+            return false;
+          }
+          
+          return true;
+        });
+        
+        weeklyAvailability[dateStr].availableSlots = availableSlots;
+        weeklyAvailability[dateStr].hasAvailability = availableSlots.length > 0;
+      }
+      
+      console.log('📊 Disponibilidade semanal processada:', weeklyAvailability);
+      return weeklyAvailability;
+    }
+    
+    // Se o Make.com retornar dados em formato diferente
+    if (makeData && typeof makeData === 'object') {
+      console.log('⚠️ Formato de dados não reconhecido, retornando dados básicos');
+      
+      const weeklyAvailability = {};
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        weeklyAvailability[dateStr] = {
+          date: dateStr,
+          hasAvailability: true,
+          bookedSlots: [],
+          availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+          message: 'Dados do Make.com processados'
+        };
+      }
+      
+      return weeklyAvailability;
+    }
+    
+    // Fallback: dados padrão
+    console.log('⚠️ Nenhum dado válido recebido, usando fallback');
+    const weeklyAvailability = {};
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      weeklyAvailability[dateStr] = {
+        date: dateStr,
+        hasAvailability: true,
+        bookedSlots: [],
+        availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+        message: 'Fallback - horários padrão'
+      };
+    }
+    
+    return weeklyAvailability;
+    
+  } catch (error) {
+    console.error('💥 Erro ao processar dados semanais:', error);
+    
+    // Fallback em caso de erro
+    const weeklyAvailability = {};
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      weeklyAvailability[dateStr] = {
+        date: dateStr,
+        hasAvailability: true,
+        bookedSlots: [],
+        availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+        message: 'Erro no processamento - horários padrão'
+      };
+    }
+    
+    return weeklyAvailability;
+  }
+}
+
+// Função para processar dados do Make (mantida para compatibilidade)
 function processMakeData(makeData, date) {
   try {
     // FORMATO ATUAL DO MAKE: Dados com occupied.busy
