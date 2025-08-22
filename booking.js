@@ -192,17 +192,18 @@ function generateAvailableDates() {
   const today = new Date();
   const availableDates = [];
   
-  // Gerar as próximas datas disponíveis
+  // CORREÇÃO: Gerar datas de forma mais robusta para evitar problemas de timezone
   for (let i = 0; i < CONFIG.UI.maxDates; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
+    // Usar UTC para evitar problemas de timezone
+    const utcDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate() + i));
     
     // Formatar a data para o formato YYYY-MM-DD
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const year = utcDate.getUTCFullYear();
+    const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(utcDate.getUTCDate()).padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`;
     
+    console.log(`🔍 DEBUG - Data ${i}: ${formattedDate} (UTC: ${utcDate.toISOString()})`);
     availableDates.push(formattedDate);
   }
   
