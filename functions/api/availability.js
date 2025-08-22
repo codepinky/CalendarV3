@@ -267,7 +267,14 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
         makeData.events.forEach((event, index) => {
           console.log(`🔍 Processando evento ${index + 1}:`, event);
           
-          if (event.start && event.name && event.status) {
+          // Limpar possíveis aspas extras no nome e status
+          const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
+          const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
+          
+          console.log(`🔍 Evento ${index + 1} - Nome limpo: "${cleanEventName}"`);
+          console.log(`🔍 Evento ${index + 1} - Status limpo: "${cleanEventStatus}"`);
+          
+          if (event.start && cleanEventName && cleanEventStatus) {
             try {
               const eventDate = new Date(event.start);
               const dateKey = eventDate.toISOString().split('T')[0];
@@ -277,7 +284,9 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
               console.log(`🔍 Evento ${index + 1} - Status: "${event.status}"`);
               
               // LÓGICA: Só mostra horários se for "Atender" + "confirmed"
-              const isAvailable = event.name === "Atender" && event.status === "confirmed";
+              console.log(`🔍 Evento ${index + 1} - Comparando: "${cleanEventName}" === "Atender" = ${cleanEventName === "Atender"}`);
+              console.log(`🔍 Evento ${index + 1} - Comparando: "${cleanEventStatus}" === "confirmed" = ${cleanEventStatus === "confirmed"}`);
+              const isAvailable = cleanEventName === "Atender" && cleanEventStatus === "confirmed";
               
               console.log(`🔍 Evento ${index + 1} - isAvailable: ${isAvailable}`);
               
@@ -285,22 +294,24 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
                 weeklyAvailability[dateKey] = {
                   date: dateKey,
                   hasAvailability: isAvailable,
-                  eventName: event.name,
-                  eventStatus: event.status,
+                  eventName: cleanEventName,
+                  eventStatus: cleanEventStatus,
                   availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
-                  bookedSlots: []
+                  bookedSlots: [],
+                  message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível'
                 };
                 console.log(`✅ Dia ${dateKey} CRIADO com disponibilidade: ${isAvailable}`);
               } else {
                 // Se já existe o dia, atualizar baseado no evento
                 weeklyAvailability[dateKey].hasAvailability = isAvailable;
-                weeklyAvailability[dateKey].eventName = event.name;
-                weeklyAvailability[dateKey].eventStatus = event.status;
+                weeklyAvailability[dateKey].eventName = cleanEventName;
+                weeklyAvailability[dateKey].eventStatus = cleanEventStatus;
                 weeklyAvailability[dateKey].availableSlots = isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [];
+                weeklyAvailability[dateKey].message = isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível';
                 console.log(`🔄 Dia ${dateKey} ATUALIZADO com disponibilidade: ${isAvailable}`);
               }
               
-              console.log(`📅 Dia ${dateKey}: Evento "${event.name}" (${event.status}) -> Disponibilidade: ${isAvailable}`);
+              console.log(`📅 Dia ${dateKey}: Evento "${cleanEventName}" (${cleanEventStatus}) -> Disponibilidade: ${isAvailable}`);
               
             } catch (error) {
               console.warn('⚠️ Erro ao processar evento:', event, error);
