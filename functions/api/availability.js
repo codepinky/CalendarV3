@@ -262,6 +262,16 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
       console.log('🔍 makeData.events:', !!makeData.events);
       console.log('🔍 Array.isArray(makeData.events):', Array.isArray(makeData.events));
       
+      // 🆕 TRATAMENTO AUTOMÁTICO PARA JSON MALFORMADO (DEVE SER PRIMEIRO!)
+      if (makeData && typeof makeData.events === 'string') {
+        console.log('🔧 JSON malformado detectado, tentando corrigir automaticamente...');
+        const correctedResult = processMalformedJSON(makeData, startDate, endDate);
+        if (correctedResult) {
+          console.log('✅ JSON malformado corrigido e processado com sucesso');
+          return correctedResult;
+        }
+      }
+
       // 🆕 TRATAMENTO PARA FORMATO COMPACTO: {"value":"Atender,confirmed,2025-08-25T13:30:00.000Z"}
       if (makeData && makeData.events && makeData.events.value && typeof makeData.events.value === 'string') {
         console.log('✅ Formato compacto detectado:', makeData.events.value);
@@ -279,16 +289,6 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
         if (fallbackResult) {
           console.log('✅ Dados fallback processados com sucesso');
           return fallbackResult;
-        }
-      }
-
-      // 🆕 TRATAMENTO AUTOMÁTICO PARA JSON MALFORMADO
-      if (makeData && typeof makeData.events === 'string') {
-        console.log('🔧 JSON malformado detectado, tentando corrigir automaticamente...');
-        const correctedResult = processMalformedJSON(makeData, startDate, endDate);
-        if (correctedResult) {
-          console.log('✅ JSON malformado corrigido e processado com sucesso');
-          return correctedResult;
         }
       }
       
