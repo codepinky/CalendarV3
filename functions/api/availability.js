@@ -253,46 +253,66 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
       return makeData.weeklyAvailability;
     }
     
-    // NOVO: Se o Make.com retornar eventos simples (nome, status, start, end)
-    if (makeData && makeData.events && Array.isArray(makeData.events)) {
-      console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
-      
-      const weeklyAvailability = {};
-      
-      // Processar cada evento para determinar disponibilidade
-      makeData.events.forEach(event => {
-        if (event.start && event.name && event.status) {
-          try {
-            const eventDate = new Date(event.start);
-            const dateKey = eventDate.toISOString().split('T')[0];
-            
-            // LÓGICA: Só mostra horários se for "Atender" + "confirmed"
-            const isAvailable = event.name === "Atender" && event.status === "confirmed";
-            
-            if (!weeklyAvailability[dateKey]) {
-              weeklyAvailability[dateKey] = {
-                date: dateKey,
-                hasAvailability: isAvailable,
-                eventName: event.name,
-                eventStatus: event.status,
-                availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
-                bookedSlots: []
-              };
-            } else {
-              // Se já existe o dia, atualizar baseado no evento
-              weeklyAvailability[dateKey].hasAvailability = isAvailable;
-              weeklyAvailability[dateKey].eventName = event.name;
-              weeklyAvailability[dateKey].eventStatus = event.status;
-              weeklyAvailability[dateKey].availableSlots = isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [];
+          // NOVO: Se o Make.com retornar eventos simples (nome, status, start, end)
+      if (makeData && makeData.events && Array.isArray(makeData.events)) {
+        console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
+        
+        const weeklyAvailability = {};
+        
+        // 🆕 LOG DETALHADO ANTES DO PROCESSAMENTO
+        console.log('🔍 ===== ANTES DO PROCESSAMENTO =====');
+        console.log('📅 weeklyAvailability inicial:', weeklyAvailability);
+        
+        // Processar cada evento para determinar disponibilidade
+        makeData.events.forEach((event, index) => {
+          console.log(`🔍 Processando evento ${index + 1}:`, event);
+          
+          if (event.start && event.name && event.status) {
+            try {
+              const eventDate = new Date(event.start);
+              const dateKey = eventDate.toISOString().split('T')[0];
+              
+              console.log(`🔍 Evento ${index + 1} - Data processada: ${dateKey}`);
+              console.log(`🔍 Evento ${index + 1} - Nome: "${event.name}"`);
+              console.log(`🔍 Evento ${index + 1} - Status: "${event.status}"`);
+              
+              // LÓGICA: Só mostra horários se for "Atender" + "confirmed"
+              const isAvailable = event.name === "Atender" && event.status === "confirmed";
+              
+              console.log(`🔍 Evento ${index + 1} - isAvailable: ${isAvailable}`);
+              
+              if (!weeklyAvailability[dateKey]) {
+                weeklyAvailability[dateKey] = {
+                  date: dateKey,
+                  hasAvailability: isAvailable,
+                  eventName: event.name,
+                  eventStatus: event.status,
+                  availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                  bookedSlots: []
+                };
+                console.log(`✅ Dia ${dateKey} CRIADO com disponibilidade: ${isAvailable}`);
+              } else {
+                // Se já existe o dia, atualizar baseado no evento
+                weeklyAvailability[dateKey].hasAvailability = isAvailable;
+                weeklyAvailability[dateKey].eventName = event.name;
+                weeklyAvailability[dateKey].eventStatus = event.status;
+                weeklyAvailability[dateKey].availableSlots = isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [];
+                console.log(`🔄 Dia ${dateKey} ATUALIZADO com disponibilidade: ${isAvailable}`);
+              }
+              
+              console.log(`📅 Dia ${dateKey}: Evento "${event.name}" (${event.status}) -> Disponibilidade: ${isAvailable}`);
+              
+            } catch (error) {
+              console.warn('⚠️ Erro ao processar evento:', event, error);
             }
-            
-            console.log(`📅 Dia ${dateKey}: Evento "${event.name}" (${event.status}) -> Disponibilidade: ${isAvailable}`);
-            
-          } catch (error) {
-            console.warn('⚠️ Erro ao processar evento:', event, error);
+          } else {
+            console.warn(`⚠️ Evento ${index + 1} inválido:`, event);
           }
-        }
-      });
+        });
+        
+        // 🆕 LOG DETALHADO DEPOIS DO PROCESSAMENTO DOS EVENTOS
+        console.log('🔍 ===== DEPOIS DO PROCESSAMENTO DOS EVENTOS =====');
+        console.log('📅 weeklyAvailability após eventos:', JSON.stringify(weeklyAvailability, null, 2));
       
       // Processar todos os dias da semana (incluindo dias sem eventos)
       const start = new Date(startDate);
