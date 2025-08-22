@@ -81,21 +81,71 @@ async function checkAvailabilityForDate(date) {
 // NOVA FUNÇÃO: Verificar disponibilidade para uma semana inteira
 async function checkWeeklyAvailability(startDate, endDate) {
   try {
-    console.log('🔄 Verificando disponibilidade semanal:', startDate, 'a', endDate);
+    console.log('🔄 ===== INICIANDO CONSULTA SEMANAL =====');
+    console.log('📅 startDate (formato):', startDate);
+    console.log('📅 endDate (formato):', endDate);
     
-    const response = await fetch(`/api/availability?startDate=${startDate}&endDate=${endDate}`);
+    // Converter para objetos Date para verificar
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+    console.log('📅 startDate (objeto):', startDateObj);
+    console.log('📅 endDate (objeto):', endDateObj);
+    console.log('📅 startDate (ISO):', startDateObj.toISOString());
+    console.log('📅 endDate (ISO):', endDateObj.toISOString());
+    
+    // Verificar se as datas são válidas
+    console.log('✅ startDate válida?', !isNaN(startDateObj.getTime()));
+    console.log('✅ endDate válida?', !isNaN(endDateObj.getTime()));
+    
+    // Calcular diferença em dias
+    const diffTime = endDateObj.getTime() - startDateObj.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    console.log('📊 Diferença em dias:', diffDays);
+    
+    // Construir URL da API
+    const apiUrl = `/api/availability?startDate=${startDate}&endDate=${endDate}`;
+    console.log('🌐 URL da API:', apiUrl);
+    
+    console.log('🚀 Enviando requisição para:', apiUrl);
+    const response = await fetch(apiUrl);
+    
+    console.log('📡 Status da resposta:', response.status);
+    console.log('📡 Headers da resposta:', Object.fromEntries(response.headers.entries()));
+    
     const data = await response.json();
+    console.log('📊 Resposta completa da API:', data);
     
     if (data.success) {
-      console.log('✅ Disponibilidade semanal recebida:', data);
-      return data;
+      console.log('✅ Sucesso na consulta semanal!');
+      console.log('📋 weeklyAvailability:', data.weeklyAvailability || {});
+      console.log('📋 Mensagem:', data.message || 'Sem mensagem');
+      
+      return {
+        success: true,
+        weeklyAvailability: data.weeklyAvailability || {},
+        message: 'Disponibilidade semanal obtida com sucesso'
+      };
     } else {
-      console.error('❌ Erro ao verificar disponibilidade semanal:', data.reason);
-      return null;
+      console.error('❌ Erro na API:', data.message);
+      console.error('❌ Dados de erro:', data);
+      
+      return {
+        success: false,
+        message: data.message || 'Erro ao obter disponibilidade semanal'
+      };
     }
   } catch (error) {
-    console.error('💥 Erro na verificação de disponibilidade semanal:', error);
-    return null;
+    console.error('❌ ===== ERRO NA CONSULTA SEMANAL =====');
+    console.error('❌ Tipo do erro:', error.constructor.name);
+    console.error('❌ Erro na verificação de disponibilidade semanal:', error.message);
+    console.error('❌ Stack trace:', error.stack);
+    
+    return {
+      success: false,
+      message: 'Erro de conexão ao consultar disponibilidade semanal'
+    };
+  } finally {
+    console.log('🏁 ===== FIM DA CONSULTA SEMANAL =====');
   }
 }
 
@@ -393,16 +443,26 @@ function generateWeekDateSlots(week) {
 // Função para consultar disponibilidade da semana e atualizar interface
 async function checkWeeklyAvailabilityAndUpdate(startDate, endDate) {
   try {
-    console.log('🔄 Consultando disponibilidade da semana:', startDate, 'a', endDate);
+    console.log('🎯 ===== INICIANDO ATUALIZAÇÃO DE DISPONIBILIDADE =====');
+    console.log('📅 startDate recebido:', startDate);
+    console.log('📅 endDate recebido:', endDate);
+    console.log('🔄 Chamando checkWeeklyAvailability...');
     
     const availability = await checkWeeklyAvailability(startDate, endDate);
     
+    console.log('📊 Resultado da consulta:', availability);
+    
     if (availability && availability.weeklyAvailability) {
+      console.log('✅ Dados de disponibilidade recebidos, atualizando interface...');
       // Atualizar visual dos slots de data baseado na disponibilidade
       updateDateSlotsAvailability(availability.weeklyAvailability);
+    } else {
+      console.log('⚠️ Nenhuma disponibilidade recebida ou dados inválidos');
     }
   } catch (error) {
     console.error('❌ Erro ao consultar disponibilidade semanal:', error);
+  } finally {
+    console.log('🏁 ===== FIM DA ATUALIZAÇÃO DE DISPONIBILIDADE =====');
   }
 }
 
