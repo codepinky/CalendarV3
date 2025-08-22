@@ -130,7 +130,7 @@ export async function onRequestGet(context) {
       console.log('🔄 Iniciando consulta semanal para:', startDate, 'a', endDate);
       
       // Consultar Make.com para disponibilidade semanal real
-      const makeUrl = 'https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce';
+      const makeUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}`;
       console.log('🔍 Consultando Make.com para semana:', startDate, 'a', endDate);
       console.log('🔗 URL do Make.com:', makeUrl);
       
