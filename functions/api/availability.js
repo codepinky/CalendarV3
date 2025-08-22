@@ -312,7 +312,7 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
           console.log(`🔍 Evento ${index + 1} - Nome limpo: "${cleanEventName}"`);
           console.log(`🔍 Evento ${index + 1} - Status limpo: "${cleanEventStatus}"`);
           
-          if (event.start && cleanEventName && cleanEventStatus) {
+          if (event.start) {
             try {
               const eventDate = new Date(event.start);
               const dateKey = eventDate.toISOString().split('T')[0];
@@ -321,10 +321,8 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
               console.log(`🔍 Evento ${index + 1} - Nome: "${event.name}"`);
               console.log(`🔍 Evento ${index + 1} - Status: "${event.status}"`);
               
-              // LÓGICA: Só mostra horários se for "Atender" + "confirmed"
-              console.log(`🔍 Evento ${index + 1} - Comparando: "${cleanEventName}" === "Atender" = ${cleanEventName === "Atender"}`);
-              console.log(`🔍 Evento ${index + 1} - Comparando: "${cleanEventStatus}" === "confirmed" = ${cleanEventStatus === "confirmed"}`);
-              const isAvailable = cleanEventName === "Atender" && cleanEventStatus === "confirmed";
+              // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+              const isAvailable = true;
               
               console.log(`🔍 Evento ${index + 1} - isAvailable: ${isAvailable}`);
               
@@ -332,24 +330,24 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
                 weeklyAvailability[dateKey] = {
                   date: dateKey,
                   hasAvailability: isAvailable,
-                  eventName: cleanEventName,
-                  eventStatus: cleanEventStatus,
+                  eventName: cleanEventName || 'Evento',
+                  eventStatus: cleanEventStatus || 'Agendado',
                   availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                   bookedSlots: [],
-                  message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível'
+                  message: 'Dia disponível para agendamento'
                 };
                 console.log(`✅ Dia ${dateKey} CRIADO com disponibilidade: ${isAvailable}`);
               } else {
                 // Se já existe o dia, atualizar baseado no evento
                 weeklyAvailability[dateKey].hasAvailability = isAvailable;
-                weeklyAvailability[dateKey].eventName = cleanEventName;
-                weeklyAvailability[dateKey].eventStatus = cleanEventStatus;
+                weeklyAvailability[dateKey].eventName = cleanEventName || 'Evento';
+                weeklyAvailability[dateKey].eventStatus = cleanEventStatus || 'Agendado';
                 weeklyAvailability[dateKey].availableSlots = isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [];
-                weeklyAvailability[dateKey].message = isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível';
+                weeklyAvailability[dateKey].message = 'Dia disponível para agendamento';
                 console.log(`🔄 Dia ${dateKey} ATUALIZADO com disponibilidade: ${isAvailable}`);
               }
               
-              console.log(`📅 Dia ${dateKey}: Evento "${cleanEventName}" (${cleanEventStatus}) -> Disponibilidade: ${isAvailable}`);
+              console.log(`📅 Dia ${dateKey}: Evento encontrado -> Disponibilidade: ${isAvailable}`);
               
             } catch (error) {
               console.warn('⚠️ Erro ao processar evento:', event, error);
@@ -500,8 +498,8 @@ function processCompactMakeData(makeData, startDate, endDate) {
             currentEvent.start = value;
             console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
             
-            // Processar evento completo
-            if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
+            // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+            if (currentEvent.start) {
               try {
                 const parsedDate = new Date(currentEvent.start);
                 const dateKey = parsedDate.toISOString().split('T')[0];
@@ -511,8 +509,8 @@ function processCompactMakeData(makeData, startDate, endDate) {
                 weeklyAvailability[dateKey] = {
                   date: dateKey,
                   hasAvailability: true,
-                  eventName: currentEvent.name,
-                  eventStatus: currentEvent.status,
+                  eventName: currentEvent.name || 'Evento',
+                  eventStatus: currentEvent.status || 'Agendado',
                   availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
                   bookedSlots: [],
                   message: 'Dia disponível para agendamento (formato separado processado)'
@@ -717,30 +715,30 @@ function processMalformedJSON(makeData, startDate, endDate) {
           currentEvent.start = value;
           console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
           
-          // Processar evento completo
-          if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
-            try {
-              const parsedDate = new Date(currentEvent.start);
-              const dateKey = parsedDate.toISOString().split('T')[0];
-              
-              console.log(`✅ Evento ${eventIndex + 1} processado - Dia: ${dateKey}`);
-              
-              weeklyAvailability[dateKey] = {
-                date: dateKey,
-                hasAvailability: true,
-                eventName: currentEvent.name,
-                eventStatus: currentEvent.status,
-                availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
-                bookedSlots: [],
-                message: 'Dia disponível para agendamento (JSON corrigido automaticamente)'
-              };
-              
-            } catch (error) {
-              console.warn(`⚠️ Erro ao processar data do evento ${eventIndex + 1}:`, currentEvent.start, error);
+                      // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+            if (currentEvent.start) {
+              try {
+                const parsedDate = new Date(currentEvent.start);
+                const dateKey = parsedDate.toISOString().split('T')[0];
+                
+                console.log(`✅ Evento ${eventIndex + 1} processado - Dia: ${dateKey}`);
+                
+                weeklyAvailability[dateKey] = {
+                  date: dateKey,
+                  hasAvailability: true,
+                  eventName: currentEvent.name || 'Evento',
+                  eventStatus: currentEvent.status || 'Agendado',
+                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  bookedSlots: [],
+                  message: 'Dia disponível para agendamento (JSON corrigido automaticamente)'
+                };
+                
+              } catch (error) {
+                console.warn(`⚠️ Erro ao processar data do evento ${eventIndex + 1}:`, currentEvent.start, error);
+              }
+            } else {
+              console.log(`⚠️ Evento ${eventIndex + 1} inválido:`, currentEvent);
             }
-          } else {
-            console.log(`⚠️ Evento ${eventIndex + 1} inválido:`, currentEvent);
-          }
         }
       }
     });
@@ -829,8 +827,8 @@ function processFallbackMakeData(makeData, startDate, endDate) {
             currentEvent.start = value;
             console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
             
-            // Processar evento completo
-            if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
+            // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+            if (currentEvent.start) {
               try {
                 const parsedDate = new Date(currentEvent.start);
                 const dateKey = parsedDate.toISOString().split('T')[0];
@@ -840,8 +838,8 @@ function processFallbackMakeData(makeData, startDate, endDate) {
                 weeklyAvailability[dateKey] = {
                   date: dateKey,
                   hasAvailability: true,
-                  eventName: currentEvent.name,
-                  eventStatus: currentEvent.status,
+                  eventName: currentEvent.name || 'Evento',
+                  eventStatus: currentEvent.status || 'Agendado',
                   availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
                   bookedSlots: [],
                   message: 'Dia disponível para agendamento (fallback processado)'

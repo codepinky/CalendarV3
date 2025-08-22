@@ -348,24 +348,25 @@
                         const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
                         const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
                         
-                        if (event.start && cleanEventName && cleanEventStatus) {
+                        if (event.start) {
                             try {
                                 const eventDate = new Date(event.start);
                                 const dateKey = eventDate.toISOString().split('T')[0];
                                 
-                                const isAvailable = cleanEventName === "Atender" && cleanEventStatus === "confirmed";
+                                // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+                                const isAvailable = true;
                                 
                                 weeklyAvailability[dateKey] = {
                                     date: dateKey,
                                     hasAvailability: isAvailable,
-                                    eventName: cleanEventName,
-                                    eventStatus: cleanEventStatus,
+                                    eventName: cleanEventName || 'Evento',
+                                    eventStatus: cleanEventStatus || 'Agendado',
                                     availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                                     bookedSlots: [],
-                                    message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível'
+                                    message: 'Dia disponível para agendamento'
                                 };
                                 
-                                log(`✅ Dia ${dateKey} processado: ${cleanEventName} (${cleanEventStatus}) -> Disponibilidade: ${isAvailable}`);
+                                log(`✅ Dia ${dateKey} processado: Evento encontrado -> Disponibilidade: ${isAvailable}`);
                                 
                             } catch (error) {
                                 log(`⚠️ Erro ao processar evento ${index + 1}:`, error);
