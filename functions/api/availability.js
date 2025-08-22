@@ -256,11 +256,21 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
       return makeData.weeklyAvailability;
     }
     
-          // NOVO: Se o Make.com retornar eventos simples (nome, status, start, end)
+                // NOVO: Se o Make.com retornar eventos simples (nome, status, start, end)
       console.log('🔍 Verificando se makeData.events existe e é array...');
       console.log('🔍 makeData:', !!makeData);
       console.log('🔍 makeData.events:', !!makeData.events);
       console.log('🔍 Array.isArray(makeData.events):', Array.isArray(makeData.events));
+      
+      // 🆕 TRATAMENTO PARA FORMATO COMPACTO: {"value":"Atender,confirmed,2025-08-25T13:30:00.000Z"}
+      if (makeData && makeData.events && makeData.events.value && typeof makeData.events.value === 'string') {
+        console.log('✅ Formato compacto detectado:', makeData.events.value);
+        const compactResult = processCompactMakeData(makeData, startDate, endDate);
+        if (compactResult) {
+          console.log('✅ Dados compactos processados com sucesso');
+          return compactResult;
+        }
+      }
       
       if (makeData && makeData.events && Array.isArray(makeData.events)) {
         console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
@@ -431,6 +441,172 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
      }
      
      return weeklyAvailability;
+  }
+}
+
+
+
+// Função para processar dados compactos do Make.com
+function processCompactMakeData(makeData, startDate, endDate) {
+  try {
+    console.log('🔍 Processando dados compactos do Make.com:', makeData);
+    
+    // 🆕 TRATAMENTO PARA FORMATO SEPARADO: [{"value":"Atender"},{"value":"confirmed"},{"value":"data"}]
+    if (makeData && makeData.events && Array.isArray(makeData.events)) {
+      console.log('✅ Array de valores separados detectado:', makeData.events);
+      
+      const weeklyAvailability = {};
+      let currentEvent = {};
+      let eventIndex = 0;
+      
+      // Processar cada valor do array
+      makeData.events.forEach((item, index) => {
+        if (item && item.value) {
+          const value = item.value;
+          console.log(`🔍 Item ${index}: ${value}`);
+          
+          // Cada 3 itens forma um evento completo
+          if (index % 3 === 0) {
+            // Novo evento
+            currentEvent = { name: value };
+            eventIndex = Math.floor(index / 3);
+            console.log(`🆕 Iniciando evento ${eventIndex + 1}: ${value}`);
+          } else if (index % 3 === 1) {
+            // Status do evento
+            currentEvent.status = value;
+            console.log(`📝 Evento ${eventIndex + 1} - Status: ${value}`);
+          } else if (index % 3 === 2) {
+            // Data do evento
+            currentEvent.start = value;
+            console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
+            
+            // Processar evento completo
+            if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
+              try {
+                const parsedDate = new Date(currentEvent.start);
+                const dateKey = parsedDate.toISOString().split('T')[0];
+                
+                console.log(`✅ Evento ${eventIndex + 1} processado - Dia: ${dateKey}`);
+                
+                weeklyAvailability[dateKey] = {
+                  date: dateKey,
+                  hasAvailability: true,
+                  eventName: currentEvent.name,
+                  eventStatus: currentEvent.status,
+                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  bookedSlots: [],
+                  message: 'Dia disponível para agendamento (formato separado processado)'
+                };
+                
+              } catch (error) {
+                console.warn(`⚠️ Erro ao processar data do evento ${eventIndex + 1}:`, currentEvent.start, error);
+              }
+            } else {
+              console.log(`⚠️ Evento ${eventIndex + 1} inválido:`, currentEvent);
+            }
+          }
+        }
+      });
+      
+      // Processar todos os dias da semana (incluindo dias sem eventos)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        
+        if (!weeklyAvailability[dateStr]) {
+          weeklyAvailability[dateStr] = {
+            date: dateStr,
+            hasAvailability: false,
+            eventName: null,
+            eventStatus: null,
+            availableSlots: [],
+            bookedSlots: [],
+            message: 'Dados do Make.com processados - Sem eventos'
+          };
+        }
+      }
+      
+      console.log('📊 Disponibilidade semanal processada a partir de dados separados:', weeklyAvailability);
+      return weeklyAvailability;
+    }
+    
+    // TRATAMENTO ORIGINAL PARA FORMATO COMPACTO: {"value":"Atender,confirmed,data"}
+    if (makeData && makeData.events && makeData.events.value) {
+      const compactString = makeData.events.value;
+      console.log('🔍 String compacta recebida:', compactString);
+      
+      // Separar por vírgulas: "Atender,confirmed,2025-08-25T13:30:00.000Z"
+      const parts = compactString.split(',');
+      console.log('🔍 Partes separadas:', parts);
+      
+      if (parts.length >= 3) {
+        const eventName = parts[0].trim();
+        const eventStatus = parts[1].trim();
+        const eventDate = parts[2].trim();
+        
+        console.log('🔍 Evento extraído:', { eventName, eventStatus, eventDate });
+        
+        // Verificar se é um evento válido
+        if (eventName === "Atender" && eventStatus === "confirmed" && eventDate) {
+          try {
+            const parsedDate = new Date(eventDate);
+            const dateKey = parsedDate.toISOString().split('T')[0];
+            
+            console.log('✅ Data válida extraída:', dateKey);
+            
+            const weeklyAvailability = {};
+            
+            // Marcar o dia como disponível
+            weeklyAvailability[dateKey] = {
+              date: dateKey,
+              hasAvailability: true,
+              eventName: eventName,
+              eventStatus: eventStatus,
+              availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+              bookedSlots: [],
+              message: 'Dia disponível para agendamento (formato compacto)'
+            };
+            
+            // Processar todos os dias da semana (incluindo dias sem eventos)
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+              const dateStr = d.toISOString().split('T')[0];
+              
+              if (!weeklyAvailability[dateStr]) {
+                weeklyAvailability[dateStr] = {
+                  date: dateStr,
+                  hasAvailability: false,
+                  eventName: null,
+                  eventStatus: null,
+                  availableSlots: [],
+                  bookedSlots: [],
+                  message: 'Dados do Make.com processados - Sem eventos'
+                };
+              }
+            }
+            
+            console.log('📊 Disponibilidade semanal processada a partir de dados compactos:', weeklyAvailability);
+            return weeklyAvailability;
+            
+          } catch (error) {
+            console.warn('⚠️ Erro ao processar data compacta:', eventDate, error);
+          }
+        } else {
+          console.log('⚠️ Evento não é "Atender" + "confirmed":', { eventName, eventStatus });
+        }
+      } else {
+        console.log('⚠️ Formato compacto inválido - precisa de pelo menos 3 partes');
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('💥 Erro ao processar dados compactos:', error);
+    return null;
   }
 }
 
