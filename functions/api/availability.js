@@ -271,6 +271,16 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
           return compactResult;
         }
       }
+
+      // 🆕 TRATAMENTO PARA QUALQUER FORMATO MALFORMADO DO MAKE.COM
+      if (makeData && makeData.events) {
+        console.log('⚠️ Formato não reconhecido, tentando processar como fallback...');
+        const fallbackResult = processFallbackMakeData(makeData, startDate, endDate);
+        if (fallbackResult) {
+          console.log('✅ Dados fallback processados com sucesso');
+          return fallbackResult;
+        }
+      }
       
       if (makeData && makeData.events && Array.isArray(makeData.events)) {
         console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
@@ -606,6 +616,150 @@ function processCompactMakeData(makeData, startDate, endDate) {
     return null;
   } catch (error) {
     console.error('💥 Erro ao processar dados compactos:', error);
+    return null;
+  }
+}
+
+// Função para processar QUALQUER formato malformado do Make.com
+function processFallbackMakeData(makeData, startDate, endDate) {
+  try {
+    console.log('🔍 Processando dados fallback do Make.com:', makeData);
+    
+    // Tentar extrair informações de qualquer formato
+    let eventsData = null;
+    
+    // Se events for uma string, tentar fazer parse
+    if (makeData.events && typeof makeData.events === 'string') {
+      try {
+        // Tentar fazer parse da string como JSON
+        eventsData = JSON.parse(makeData.events);
+        console.log('✅ String parseada com sucesso:', eventsData);
+      } catch (parseError) {
+        console.log('⚠️ Falha ao fazer parse da string, tratando como texto puro');
+        eventsData = makeData.events;
+      }
+    } else if (makeData.events) {
+      eventsData = makeData.events;
+    }
+    
+    if (!eventsData) {
+      console.log('❌ Nenhum dado de eventos encontrado');
+      return null;
+    }
+    
+    console.log('🔍 Dados de eventos para processamento:', eventsData);
+    
+    const weeklyAvailability = {};
+    let eventIndex = 0;
+    
+    // Se for um array, processar cada item
+    if (Array.isArray(eventsData)) {
+      console.log('✅ Array detectado, processando itens...');
+      
+      let currentEvent = {};
+      
+      eventsData.forEach((item, index) => {
+        if (item && item.value) {
+          const value = item.value;
+          console.log(`🔍 Item ${index}: ${value}`);
+          
+          // Cada 3 itens forma um evento completo
+          if (index % 3 === 0) {
+            currentEvent = { name: value };
+            eventIndex = Math.floor(index / 3);
+            console.log(`🆕 Iniciando evento ${eventIndex + 1}: ${value}`);
+          } else if (index % 3 === 1) {
+            currentEvent.status = value;
+            console.log(`📝 Evento ${eventIndex + 1} - Status: ${value}`);
+          } else if (index % 3 === 2) {
+            currentEvent.start = value;
+            console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
+            
+            // Processar evento completo
+            if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
+              try {
+                const parsedDate = new Date(currentEvent.start);
+                const dateKey = parsedDate.toISOString().split('T')[0];
+                
+                console.log(`✅ Evento ${eventIndex + 1} processado - Dia: ${dateKey}`);
+                
+                weeklyAvailability[dateKey] = {
+                  date: dateKey,
+                  hasAvailability: true,
+                  eventName: currentEvent.name,
+                  eventStatus: currentEvent.status,
+                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  bookedSlots: [],
+                  message: 'Dia disponível para agendamento (fallback processado)'
+                };
+                
+              } catch (error) {
+                console.warn(`⚠️ Erro ao processar data do evento ${eventIndex + 1}:`, currentEvent.start, error);
+              }
+            } else {
+              console.log(`⚠️ Evento ${eventIndex + 1} inválido:`, currentEvent);
+            }
+          }
+        }
+      });
+    } else if (typeof eventsData === 'string') {
+      console.log('✅ String detectada, tentando extrair datas...');
+      
+      // Extrair datas usando regex
+      const dateRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
+      const dates = eventsData.match(dateRegex);
+      
+      if (dates && dates.length > 0) {
+        console.log('✅ Datas extraídas:', dates);
+        
+        dates.forEach((dateStr, index) => {
+          try {
+            const eventDate = new Date(dateStr);
+            const dateKey = eventDate.toISOString().split('T')[0];
+            
+            weeklyAvailability[dateKey] = {
+              date: dateKey,
+              hasAvailability: true,
+              eventName: "Atender",
+              eventStatus: "confirmed",
+              availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+              bookedSlots: [],
+              message: 'Dia disponível para agendamento (datas extraídas por regex)'
+            };
+            
+            console.log(`✅ Dia ${dateKey} marcado como disponível`);
+          } catch (error) {
+            console.warn(`⚠️ Erro ao processar data extraída:`, dateStr, error);
+          }
+        });
+      }
+    }
+    
+    // Processar todos os dias da semana (incluindo dias sem eventos)
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      
+      if (!weeklyAvailability[dateStr]) {
+        weeklyAvailability[dateStr] = {
+          date: dateStr,
+          hasAvailability: false,
+          eventName: null,
+          eventStatus: null,
+          availableSlots: [],
+          bookedSlots: [],
+          message: 'Dados do Make.com processados - Sem eventos'
+        };
+      }
+    }
+    
+    console.log('📊 Disponibilidade semanal processada com fallback:', weeklyAvailability);
+    return weeklyAvailability;
+    
+  } catch (error) {
+    console.error('💥 Erro ao processar dados fallback:', error);
     return null;
   }
 }
