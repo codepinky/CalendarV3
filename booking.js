@@ -3,6 +3,57 @@
 // Usar configurações do arquivo config.js
 const WORKING_HOURS = CONFIG.WORKING_HOURS;
 
+// Função para calcular semanas do mês (sempre começando no domingo)
+function getWeeksOfMonth(year, month) {
+  const weeks = [];
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  // Encontrar o primeiro domingo do mês (ou domingo anterior)
+  let startDate = new Date(firstDay);
+  const dayOfWeek = firstDay.getDay(); // 0 = Domingo
+  startDate.setDate(firstDay.getDate() - dayOfWeek);
+  
+  // Gerar semanas até cobrir todo o mês (mínimo 5 semanas)
+  while (startDate <= lastDay || weeks.length < 5) {
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6); // +6 para chegar no sábado
+    
+    weeks.push({
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+      weekNumber: weeks.length + 1,
+      label: `Semana ${weeks.length + 1}`
+    });
+    
+    startDate.setDate(startDate.getDate() + 7); // Próxima semana
+  }
+  
+  return weeks;
+}
+
+// Função para obter a semana atual (baseada no dia atual)
+function getCurrentWeek() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  
+  const weeks = getWeeksOfMonth(year, month);
+  
+  // Encontrar a semana que contém o dia atual
+  for (const week of weeks) {
+    const weekStart = new Date(week.startDate);
+    const weekEnd = new Date(week.endDate);
+    
+    if (today >= weekStart && today <= weekEnd) {
+      return week;
+    }
+  }
+  
+  // Fallback: primeira semana do mês
+  return weeks[0];
+}
+
 // Função para verificar disponibilidade de horários para uma data específica
 async function checkAvailabilityForDate(date) {
   try {
@@ -23,6 +74,27 @@ async function checkAvailabilityForDate(date) {
     }
   } catch (error) {
     console.error('Erro na verificação de disponibilidade:', error);
+    return null;
+  }
+}
+
+// NOVA FUNÇÃO: Verificar disponibilidade para uma semana inteira
+async function checkWeeklyAvailability(startDate, endDate) {
+  try {
+    console.log('🔄 Verificando disponibilidade semanal:', startDate, 'a', endDate);
+    
+    const response = await fetch(`/api/availability?startDate=${startDate}&endDate=${endDate}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('✅ Disponibilidade semanal recebida:', data);
+      return data;
+    } else {
+      console.error('❌ Erro ao verificar disponibilidade semanal:', data.reason);
+      return null;
+    }
+  } catch (error) {
+    console.error('💥 Erro na verificação de disponibilidade semanal:', error);
     return null;
   }
 }
