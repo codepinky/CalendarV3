@@ -313,8 +313,8 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
         // 🆕 LOG DETALHADO DEPOIS DO PROCESSAMENTO DOS EVENTOS
         console.log('🔍 ===== DEPOIS DO PROCESSAMENTO DOS EVENTOS =====');
         console.log('📅 weeklyAvailability após eventos:', JSON.stringify(weeklyAvailability, null, 2));
-      
-      // Processar todos os dias da semana (incluindo dias sem eventos)
+        
+        // Processar todos os dias da semana (incluindo dias sem eventos)
       const start = new Date(startDate);
       const end = new Date(endDate);
       
