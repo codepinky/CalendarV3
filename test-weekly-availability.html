@@ -93,6 +93,12 @@
         </div>
 
         <div class="test-section">
+            <h3>🔍 Debug Logs</h3>
+            <div id="debug" class="result" style="background: #000; color: #00ff00; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+            <button class="test-button" onclick="clearLogs()" style="margin-top: 10px;">🗑️ Limpar Logs</button>
+        </div>
+
+        <div class="test-section">
             <h3>🔗 URLs de Teste</h3>
             <p><strong>Webhook Semanal:</strong> <code>https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce</code></p>
             <p><strong>API Backend:</strong> <code>/api/availability?startDate=...&endDate=...</code></p>
@@ -138,10 +144,18 @@
         }
 
         function log(message) {
-            const debug = document.getElementById('debug');
             const timestamp = new Date().toLocaleTimeString();
-            debug.textContent += `[${timestamp}] ${message}\n`;
-            debug.scrollTop = debug.scrollHeight;
+            const logMessage = `[${timestamp}] ${message}`;
+            
+            // Mostrar no console do navegador
+            console.log(logMessage);
+            
+            // Mostrar na tela de debug
+            const debug = document.getElementById('debug');
+            if (debug) {
+                debug.textContent += logMessage + '\n';
+                debug.scrollTop = debug.scrollHeight;
+            }
         }
 
         async function checkWeeklyAvailability() {
@@ -251,6 +265,15 @@
                     <p><strong>Erro:</strong> ${error.message}</p>
                     <p><strong>Stack:</strong> ${error.stack}</p>
                 `;
+            }
+        }
+
+        // Função para limpar logs
+        function clearLogs() {
+            const debug = document.getElementById('debug');
+            if (debug) {
+                debug.textContent = '';
+                log('🗑️ Logs limpos');
             }
         }
 
