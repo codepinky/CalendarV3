@@ -258,49 +258,114 @@ function generateDefaultTimeSlots(date) {
   return slots;
 }
 
-// Função para gerar as próximas datas disponíveis (8 dias)
+// Função para gerar as semanas disponíveis do mês
 function generateAvailableDates() {
   const dateSelector = document.querySelector('.date-selector');
   const today = new Date();
-  const availableDates = [];
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
   
-  // CORREÇÃO: Gerar datas de forma mais robusta para evitar problemas de timezone
-  for (let i = 0; i < CONFIG.UI.maxDates; i++) {
-    // Usar UTC para evitar problemas de timezone
-    const utcDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate() + i));
-    
-    // Formatar a data para o formato YYYY-MM-DD
-    const year = utcDate.getUTCFullYear();
-    const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(utcDate.getUTCDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    
-    console.log(`🔍 DEBUG - Data ${i}: ${formattedDate} (UTC: ${utcDate.toISOString()})`);
-    availableDates.push(formattedDate);
-  }
+  // Obter todas as semanas do mês atual
+  const weeks = getWeeksOfMonth(currentYear, currentMonth);
+  const currentWeek = getCurrentWeek();
   
   // Limpar conteúdo existente
   dateSelector.innerHTML = `
-    <label for="date">Data do Encontro</label>
-    <div class="date-slots">
-      <!-- As datas serão geradas aqui -->
+    <label for="week">Semana do Encontro</label>
+    <div class="week-selector">
+      <button type="button" id="prev-week" class="week-nav-btn">← Semana Anterior</button>
+      <div class="current-week-display">
+        <span id="current-week-label">Carregando...</span>
+      </div>
+      <button type="button" id="next-week" class="week-nav-btn">Próxima Semana →</button>
     </div>
-    <input type="hidden" id="date" name="date" required>
+    <div class="date-slots">
+      <!-- As datas da semana selecionada serão geradas aqui -->
+    </div>
+    <input type="hidden" id="selected-week-start" name="selected-week-start" required>
+    <input type="hidden" id="selected-week-end" name="selected-week-end" required>
   `;
   
-  const dateSlotsContainer = dateSelector.querySelector('.date-slots');
+  // Configurar navegação de semanas
+  let currentWeekIndex = weeks.findIndex(week => 
+    week.startDate === currentWeek.startDate && week.endDate === currentWeek.endDate
+  );
+  if (currentWeekIndex === -1) currentWeekIndex = 0;
   
-  // Adicionar as datas disponíveis como slots visuais
-  availableDates.forEach((date, index) => {
+  const prevWeekBtn = document.getElementById('prev-week');
+  const nextWeekBtn = document.getElementById('next-week');
+  const currentWeekLabel = document.getElementById('current-week-label');
+  
+  // Função para atualizar semana selecionada
+  function updateWeekDisplay(weekIndex) {
+    const week = weeks[weekIndex];
+    if (!week) return;
+    
+    // Atualizar label da semana
+    const startDate = new Date(week.startDate);
+    const endDate = new Date(week.endDate);
+    const startDay = startDate.getDate();
+    const endDay = endDate.getDate();
+    const month = startDate.toLocaleDateString('pt-BR', { month: 'long' });
+    
+    currentWeekLabel.innerHTML = `
+      <strong>Semana ${week.weekNumber}</strong><br>
+      <span class="week-dates">${startDay} a ${endDay} de ${month}</span>
+    `;
+    
+    // Atualizar campos hidden
+    document.getElementById('selected-week-start').value = week.startDate;
+    document.getElementById('selected-week-end').value = week.endDate;
+    
+    // Atualizar botões de navegação
+    prevWeekBtn.disabled = weekIndex === 0;
+    nextWeekBtn.disabled = weekIndex === weeks.length - 1;
+    
+    // Gerar slots de datas para esta semana
+    generateWeekDateSlots(week);
+    
+    // Consultar disponibilidade da semana
+    checkWeeklyAvailabilityAndUpdate(week.startDate, week.endDate);
+  }
+  
+  // Eventos de navegação
+  prevWeekBtn.addEventListener('click', () => {
+    if (currentWeekIndex > 0) {
+      currentWeekIndex--;
+      updateWeekDisplay(currentWeekIndex);
+    }
+  });
+  
+  nextWeekBtn.addEventListener('click', () => {
+    if (currentWeekIndex < weeks.length - 1) {
+      currentWeekIndex++;
+      updateWeekDisplay(currentWeekIndex);
+    }
+  });
+  
+  // Inicializar com semana atual
+  updateWeekDisplay(currentWeekIndex);
+}
+
+// Função para gerar slots de datas de uma semana específica
+function generateWeekDateSlots(week) {
+  const dateSlotsContainer = document.querySelector('.date-slots');
+  dateSlotsContainer.innerHTML = ''; // Limpar slots anteriores
+  
+  // Gerar slots para cada dia da semana
+  const startDate = new Date(week.startDate);
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    
+    const formattedDate = currentDate.toISOString().split('T')[0];
+    const dayOfWeek = currentDate.toLocaleDateString('pt-BR', { weekday: 'short' });
+    const day = currentDate.getDate();
+    const month = currentDate.toLocaleDateString('pt-BR', { month: 'short' });
+    
     const dateSlot = document.createElement('div');
     dateSlot.className = 'date-slot';
-    dateSlot.dataset.date = date;
-    
-    // Formatar a data para exibição
-    const displayDate = new Date(date);
-    const dayOfWeek = displayDate.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const day = displayDate.getDate();
-    const month = displayDate.toLocaleDateString('pt-BR', { month: 'short' });
+    dateSlot.dataset.date = formattedDate;
     
     dateSlot.innerHTML = `
       <span class="date-day">${day}</span>
@@ -315,25 +380,50 @@ function generateAvailableDates() {
       // Selecionar esta data
       dateSlot.classList.add('selected');
       // Atualizar campo hidden
-      document.getElementById('date').value = date;
-      console.log('🎯 CLIQUE NA DATA - Data selecionada:', date);
-      console.log('🎯 CLIQUE NA DATA - Campo date após atualização:', document.getElementById('date').value);
-      console.log('🎯 CLIQUE NA DATA - Elemento date existe?', !!document.getElementById('date'));
-      console.log('🎯 CLIQUE NA DATA - Elemento date ID:', document.getElementById('date')?.id);
-      console.log('🎯 CLIQUE NA DATA - Elemento date name:', document.getElementById('date')?.name);
+      document.getElementById('date').value = formattedDate;
+      console.log('🎯 CLIQUE NA DATA - Data selecionada:', formattedDate);
       // Gerar horários para esta data
       generateTimeSlots();
     });
     
     dateSlotsContainer.appendChild(dateSlot);
+  }
+}
+
+// Função para consultar disponibilidade da semana e atualizar interface
+async function checkWeeklyAvailabilityAndUpdate(startDate, endDate) {
+  try {
+    console.log('🔄 Consultando disponibilidade da semana:', startDate, 'a', endDate);
     
-    // Selecionar a primeira data por padrão
-    if (index === 0) {
-      dateSlot.classList.add('selected');
-      document.getElementById('date').value = date;
-      console.log('🎯 DATA PADRÃO - Data selecionada:', date);
-      console.log('🎯 DATA PADRÃO - Campo date após atualização:', document.getElementById('date').value);
-      console.log('🎯 DATA PADRÃO - Elemento date existe?', !!document.getElementById('date'));
+    const availability = await checkWeeklyAvailability(startDate, endDate);
+    
+    if (availability && availability.weeklyAvailability) {
+      // Atualizar visual dos slots de data baseado na disponibilidade
+      updateDateSlotsAvailability(availability.weeklyAvailability);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao consultar disponibilidade semanal:', error);
+  }
+}
+
+// Função para atualizar visual dos slots baseado na disponibilidade
+function updateDateSlotsAvailability(weeklyAvailability) {
+  const dateSlots = document.querySelectorAll('.date-slot');
+  
+  dateSlots.forEach(slot => {
+    const date = slot.dataset.date;
+    const dayAvailability = weeklyAvailability[date];
+    
+    if (dayAvailability) {
+      if (dayAvailability.available) {
+        slot.classList.add('available');
+        slot.classList.remove('unavailable');
+        slot.title = `Disponível: ${dayAvailability.slots.join(', ')}`;
+      } else {
+        slot.classList.add('unavailable');
+        slot.classList.remove('available');
+        slot.title = 'Sem horários disponíveis';
+      }
     }
   });
 }
