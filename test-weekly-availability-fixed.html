@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Weekly Availability CORRIGIDO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .date-input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .debug-section {
+            background: #000;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste - Weekly Availability CORRIGIDO</h1>
+        <p>Esta página combina a chamada direta ao Make (que funciona) com o processamento dos dados (que estava falhando no backend)</p>
+
+        <div class="test-section">
+            <h3>📅 Seletor de Semana</h3>
+            <div class="week-selector">
+                <button class="test-button" onclick="previousWeek()">← Semana Anterior</button>
+                <span id="currentWeek">Semana atual</span>
+                <button class="test-button" onclick="nextWeek()">Próxima Semana →</button>
+            </div>
+            <div>
+                <label>Data Inicial: <input type="date" id="startDate" class="date-input"></label>
+                <label>Data Final: <input type="date" id="endDate" class="date-input"></label>
+            </div>
+            <button class="test-button" onclick="testDirectMakeWebhook()">🔍 Testar Make Diretamente</button>
+            <button class="test-button" onclick="testBackendAPI()">🔍 Testar Backend API</button>
+            <button class="test-button" onclick="clearResults()">🗑️ Limpar</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resultado da Consulta Direta ao Make</h3>
+            <div id="resultDirect" class="result">Clique em "Testar Make Diretamente" para testar...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resultado da Consulta ao Backend</h3>
+            <div id="resultBackend" class="result">Clique em "Testar Backend API" para testar...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Debug Logs</h3>
+            <div id="debug" class="debug-section">Logs aparecerão aqui...</div>
+            <button class="test-button" onclick="clearLogs()" style="margin-top: 10px;">🗑️ Limpar Logs</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔗 URLs de Teste</h3>
+            <p><strong>Webhook Semanal:</strong> <code>https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce</code></p>
+            <p><strong>API Backend:</strong> <code>/api/availability?startDate=...&endDate=...</code></p>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar com a semana atual
+        let currentWeekStart = getWeekStart(new Date());
+        updateWeekDisplay();
+
+        function getWeekStart(date) {
+            const day = date.getDay();
+            const diff = date.getDate() - day;
+            return new Date(date.setDate(diff));
+        }
+
+        function updateWeekDisplay() {
+            const startDate = new Date(currentWeekStart);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            
+            document.getElementById('currentWeek').textContent = 
+                `Semana de ${startDate.toLocaleDateString('pt-BR')} a ${endDate.toLocaleDateString('pt-BR')}`;
+        }
+
+        function previousWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            updateWeekDisplay();
+        }
+
+        function nextWeek() {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            updateWeekDisplay();
+        }
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            
+            // Mostrar no console do navegador
+            console.log(logMessage);
+            
+            // Mostrar na tela de debug
+            const debug = document.getElementById('debug');
+            if (debug) {
+                debug.textContent += logMessage + '\n';
+                debug.scrollTop = debug.scrollHeight;
+            }
+        }
+
+        // 🆕 FUNÇÃO PARA TESTAR MAKE DIRETAMENTE (QUE FUNCIONA)
+        async function testDirectMakeWebhook() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const resultDiv = document.getElementById('resultDirect');
+
+            if (!startDate || !endDate) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Erro: Selecione as datas inicial e final';
+                return;
+            }
+
+            log(`🔍 Testando Make diretamente para: ${startDate} a ${endDate}`);
+
+            try {
+                // 🆕 CHAMADA DIRETA AO MAKE (COMO NA PÁGINA QUE FUNCIONA)
+                const webhookUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}`;
+                
+                log(`🔗 URL do webhook: ${webhookUrl}`);
+                resultDiv.textContent = `🔄 Fazendo requisição direta ao Make...`;
+
+                const response = await fetch(webhookUrl);
+                const responseText = await response.text();
+                
+                log(`📡 Resposta do Make - Status: ${response.status}`);
+                log(`📡 Resposta do Make - OK: ${response.ok}`);
+                log(`📡 Tamanho da resposta: ${responseText.length} caracteres`);
+
+                // Tentar fazer parse do JSON
+                let makeData;
+                try {
+                    makeData = JSON.parse(responseText);
+                    log(`✅ JSON parseado com sucesso`);
+                } catch (parseError) {
+                    log(`❌ Erro ao fazer parse do JSON: ${parseError.message}`);
+                    log(`📄 Resposta bruta: ${responseText}`);
+                    
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `💥 ERRO NO JSON DO MAKE!\n\n📡 Status: ${response.status}\n📡 OK: ${response.ok}\n\n❌ ERRO DE PARSE:\n${parseError.message}\n\n📄 RESPOSTA BRUTA:\n${responseText}`;
+                    return;
+                }
+
+                // 🆕 AGORA PROCESSAR OS DADOS COMO O BACKEND FARIA
+                log(`🔧 Processando dados do Make com função local...`);
+                const processedData = processWeeklyMakeDataLocal(makeData, startDate, endDate);
+                
+                log(`✅ Dados processados com sucesso`);
+                log(`📊 Total de dias processados: ${Object.keys(processedData).length}`);
+
+                // Exibir resultado processado
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <h4>✅ Make funcionando + Dados processados!</h4>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Sucesso:</strong> Sim</p>
+                    <p><strong>Data Inicial:</strong> ${startDate}</p>
+                    <p><strong>Data Final:</strong> ${endDate}</p>
+                    <p><strong>Fonte:</strong> Make Direto + Processamento Local</p>
+                    
+                    <h5>📊 RESUMO PROCESSADO:</h5>
+                    <p><strong>Total de dias:</strong> ${Object.keys(processedData).length}</p>
+                    
+                    <h5>📅 DIAS PROCESSADOS:</h5>
+                    ${Object.keys(processedData).map(date => {
+                        const day = processedData[date];
+                        const bgColor = day.hasAvailability ? '#e8f5e8' : '#ffe8e8';
+                        const statusIcon = day.hasAvailability ? '✅' : '❌';
+                        return `
+                            <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: ${bgColor};">
+                                <strong>${statusIcon} ${date}</strong><br>
+                                <strong>Evento:</strong> ${day.eventName || 'N/A'}<br>
+                                <strong>Status:</strong> ${day.eventStatus || 'N/A'}<br>
+                                <strong>Disponível:</strong> ${day.hasAvailability ? 'Sim' : 'Não'}<br>
+                                <strong>Horários:</strong> ${day.availableSlots.join(', ') || 'Nenhum'}<br>
+                                <strong>Mensagem:</strong> ${day.message || 'N/A'}
+                            </div>
+                        `;
+                    }).join('')}
+                    
+                    <h5>🔍 DADOS BRUTOS DO MAKE (para debug):</h5>
+                    <pre>${JSON.stringify(makeData, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                log(`💥 Erro ao testar Make diretamente: ${error.message}`);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>💥 Erro na consulta direta</h4>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong> ${error.stack}</p>
+                `;
+            }
+        }
+
+        // 🆕 FUNÇÃO PARA TESTAR BACKEND (QUE ESTAVA FALHANDO)
+        async function testBackendAPI() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const resultDiv = document.getElementById('resultBackend');
+
+            if (!startDate || !endDate) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Erro: Selecione as datas inicial e final';
+                return;
+            }
+
+            log(`🔍 Testando backend para: ${startDate} a ${endDate}`);
+
+            try {
+                const backendUrl = `/api/availability?startDate=${startDate}&endDate=${endDate}`;
+                log(`🔗 URL do backend: ${backendUrl}`);
+
+                const backendResponse = await fetch(backendUrl);
+                const backendData = await backendResponse.json();
+
+                log(`📊 Resposta do backend - Status: ${backendResponse.status}`);
+                log(`📊 Dados do backend: ${JSON.stringify(backendData, null, 2)}`);
+
+                if (backendResponse.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h4>✅ Backend funcionando!</h4>
+                        <p><strong>Status:</strong> ${backendResponse.status}</p>
+                        <p><strong>Sucesso:</strong> ${backendData.success}</p>
+                        <p><strong>Data Inicial:</strong> ${backendData.startDate}</p>
+                        <p><strong>Data Final:</strong> ${backendData.endDate}</p>
+                        <p><strong>Fonte:</strong> ${backendData.source}</p>
+                        
+                        <h5>🔍 DADOS BRUTOS DO BACKEND:</h5>
+                        <pre>${JSON.stringify(backendData, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h4>❌ Erro no backend</h4>
+                        <p><strong>Status:</strong> ${backendResponse.status}</p>
+                        <p><strong>Erro:</strong> ${backendData.reason || 'Erro desconhecido'}</p>
+                    `;
+                }
+
+            } catch (error) {
+                log(`💥 Erro ao testar backend: ${error.message}`);
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h4>💥 Erro na consulta ao backend</h4>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                    <p><strong>Stack:</strong> ${error.stack}</p>
+                `;
+            }
+        }
+
+        // 🆕 FUNÇÃO LOCAL PARA PROCESSAR DADOS DO MAKE (COMO O BACKEND FARIA)
+        function processWeeklyMakeDataLocal(makeData, startDate, endDate) {
+            try {
+                log(`🔧 Processando dados semanais do Make localmente:`, makeData);
+                
+                // Se o Make retornar dados estruturados
+                if (makeData && makeData.weeklyAvailability) {
+                    log(`✅ Dados estruturados recebidos do Make`);
+                    return makeData.weeklyAvailability;
+                }
+                
+                // Se o Make retornar eventos simples
+                if (makeData && makeData.events && Array.isArray(makeData.events)) {
+                    log(`✅ Eventos simples recebidos do Make: ${makeData.events.length}`);
+                    
+                    const weeklyAvailability = {};
+                    
+                    // Processar cada evento
+                    makeData.events.forEach((event, index) => {
+                        log(`🔍 Processando evento ${index + 1}:`, event);
+                        
+                        // Limpar possíveis aspas extras
+                        const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
+                        const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
+                        
+                        if (event.start && cleanEventName && cleanEventStatus) {
+                            try {
+                                const eventDate = new Date(event.start);
+                                const dateKey = eventDate.toISOString().split('T')[0];
+                                
+                                const isAvailable = cleanEventName === "Atender" && cleanEventStatus === "confirmed";
+                                
+                                weeklyAvailability[dateKey] = {
+                                    date: dateKey,
+                                    hasAvailability: isAvailable,
+                                    eventName: cleanEventName,
+                                    eventStatus: cleanEventStatus,
+                                    availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                                    bookedSlots: [],
+                                    message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível'
+                                };
+                                
+                                log(`✅ Dia ${dateKey} processado: ${cleanEventName} (${cleanEventStatus}) -> Disponibilidade: ${isAvailable}`);
+                                
+                            } catch (error) {
+                                log(`⚠️ Erro ao processar evento ${index + 1}:`, error);
+                            }
+                        }
+                    });
+                    
+                    // Processar todos os dias da semana (incluindo dias sem eventos)
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    
+                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                        const dateStr = d.toISOString().split('T')[0];
+                        
+                        if (!weeklyAvailability[dateStr]) {
+                            weeklyAvailability[dateStr] = {
+                                date: dateStr,
+                                hasAvailability: false,
+                                eventName: null,
+                                eventStatus: null,
+                                availableSlots: [],
+                                bookedSlots: [],
+                                message: 'Dados do Make processados - Sem eventos'
+                            };
+                            log(`📅 Dia ${dateStr}: Sem evento -> Sem disponibilidade`);
+                        }
+                    }
+                    
+                    log(`📊 Disponibilidade semanal processada localmente:`, weeklyAvailability);
+                    return weeklyAvailability;
+                }
+                
+                // Se o Make retornar dados em formato diferente
+                log(`🔍 Nenhum evento encontrado, verificando formato alternativo...`);
+                if (makeData && typeof makeData === 'object') {
+                    log(`⚠️ Formato de dados não reconhecido, retornando dados básicos`);
+                    
+                    const weeklyAvailability = {};
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    
+                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                        const dateStr = d.toISOString().split('T')[0];
+                        weeklyAvailability[dateStr] = {
+                            date: dateStr,
+                            hasAvailability: false,
+                            eventName: null,
+                            eventStatus: null,
+                            availableSlots: [],
+                            bookedSlots: [],
+                            message: 'Formato não reconhecido - Sem disponibilidade'
+                        };
+                    }
+                    
+                    return weeklyAvailability;
+                }
+                
+                // Dados inválidos
+                log(`❌ Dados inválidos recebidos do Make`);
+                return {};
+                
+            } catch (error) {
+                log(`💥 Erro ao processar dados do Make localmente:`, error);
+                return {};
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('resultDirect').textContent = 'Clique em "Testar Make Diretamente" para testar...';
+            document.getElementById('resultBackend').textContent = 'Clique em "Testar Backend API" para testar...';
+            document.getElementById('resultDirect').className = 'result';
+            document.getElementById('resultBackend').className = 'result';
+        }
+
+        function clearLogs() {
+            const debug = document.getElementById('debug');
+            if (debug) {
+                debug.textContent = '';
+                log('🗑️ Logs limpos');
+            }
+        }
+
+        // Log inicial
+        log('🚀 Sistema de teste CORRIGIDO iniciado');
+        log('📅 Semana atual carregada');
+        log('💡 Use "Testar Make Diretamente" para ver dados processados localmente');
+        log('💡 Use "Testar Backend API" para ver se o backend está funcionando');
+    </script>
+</body>
+</html>
