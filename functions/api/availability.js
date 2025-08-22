@@ -289,55 +289,61 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
         const dateStr = d.toISOString().split('T')[0];
         weeklyAvailability[dateStr] = {
           date: dateStr,
-          hasAvailability: true,
+          hasAvailability: false,  // ✅ CORRIGIDO: Sempre false para dias sem eventos
+          eventName: null,
+          eventStatus: null,
           bookedSlots: [],
-          availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
-          message: 'Dados do Make.com processados'
+          availableSlots: [],  // ✅ CORRIGIDO: Sem horários disponíveis
+          message: 'Dados do Make.com processados - Sem eventos'
         };
       }
       
       return weeklyAvailability;
     }
     
-    // Fallback: dados padrão
-    console.log('⚠️ Nenhum dado válido recebido, usando fallback');
-    const weeklyAvailability = {};
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
-      weeklyAvailability[dateStr] = {
-        date: dateStr,
-        hasAvailability: true,
-        bookedSlots: [],
-        availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
-        message: 'Fallback - horários padrão'
-      };
-    }
-    
-    return weeklyAvailability;
+         // Fallback: dados padrão
+     console.log('⚠️ Nenhum dado válido recebido, usando fallback');
+     const weeklyAvailability = {};
+     const start = new Date(startDate);
+     const end = new Date(endDate);
+     
+     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+       const dateStr = d.toISOString().split('T')[0];
+       weeklyAvailability[dateStr] = {
+         date: dateStr,
+         hasAvailability: false,  // ✅ CORRIGIDO: Sempre false para dias sem eventos
+         eventName: null,
+         eventStatus: null,
+         bookedSlots: [],
+         availableSlots: [],  // ✅ CORRIGIDO: Sem horários disponíveis
+         message: 'Fallback - Sem eventos para agendamento'
+       };
+     }
+     
+     return weeklyAvailability;
     
   } catch (error) {
     console.error('💥 Erro ao processar dados semanais:', error);
     
-    // Fallback em caso de erro
-    const weeklyAvailability = {};
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
-      weeklyAvailability[dateStr] = {
-        date: dateStr,
-        hasAvailability: true,
-        bookedSlots: [],
-        availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
-        message: 'Erro no processamento - horários padrão'
-      };
-    }
-    
-    return weeklyAvailability;
+         // Fallback em caso de erro
+     const weeklyAvailability = {};
+     const start = new Date(startDate);
+     const end = new Date(endDate);
+     
+     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+       const dateStr = d.toISOString().split('T')[0];
+       weeklyAvailability[dateStr] = {
+         date: dateStr,
+         hasAvailability: false,  // ✅ CORRIGIDO: Sempre false para dias sem eventos
+         eventName: null,
+         eventStatus: null,
+         bookedSlots: [],
+         availableSlots: [],  // ✅ CORRIGIDO: Sem horários disponíveis
+         message: 'Erro no processamento - Sem eventos para agendamento'
+       };
+     }
+     
+     return weeklyAvailability;
   }
 }
 
