@@ -281,6 +281,16 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
           return fallbackResult;
         }
       }
+
+      // 🆕 TRATAMENTO AUTOMÁTICO PARA JSON MALFORMADO
+      if (makeData && typeof makeData.events === 'string') {
+        console.log('🔧 JSON malformado detectado, tentando corrigir automaticamente...');
+        const correctedResult = processMalformedJSON(makeData, startDate, endDate);
+        if (correctedResult) {
+          console.log('✅ JSON malformado corrigido e processado com sucesso');
+          return correctedResult;
+        }
+      }
       
       if (makeData && makeData.events && Array.isArray(makeData.events)) {
         console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
@@ -616,6 +626,150 @@ function processCompactMakeData(makeData, startDate, endDate) {
     return null;
   } catch (error) {
     console.error('💥 Erro ao processar dados compactos:', error);
+    return null;
+  }
+}
+
+// Função para corrigir automaticamente JSON malformado do Make.com
+function processMalformedJSON(makeData, startDate, endDate) {
+  try {
+    console.log('🔧 Corrigindo JSON malformado do Make.com:', makeData.events);
+    
+    // O Make.com está enviando: {"value":"Atender"}, {"value":"confirmed"}, {"value":"data"}
+    // Precisamos transformar em: [{"value":"Atender"}, {"value":"confirmed"}, {"value":"data"}]
+    
+    let eventsString = makeData.events;
+    
+    // Remover quebras de linha e espaços extras
+    eventsString = eventsString.replace(/\s+/g, ' ').trim();
+    
+    // Se não começar com [, adicionar
+    if (!eventsString.startsWith('[')) {
+      eventsString = '[' + eventsString;
+    }
+    
+    // Se não terminar com ], adicionar
+    if (!eventsString.endsWith(']')) {
+      eventsString = eventsString + ']';
+    }
+    
+    console.log('🔧 JSON corrigido:', eventsString);
+    
+    // Tentar fazer parse do JSON corrigido
+    let correctedEvents;
+    try {
+      correctedEvents = JSON.parse(eventsString);
+      console.log('✅ JSON corrigido parseado com sucesso:', correctedEvents);
+    } catch (parseError) {
+      console.log('⚠️ Falha no parse do JSON corrigido, tentando método alternativo...');
+      
+      // Método alternativo: extrair objetos individuais com regex
+      const objectRegex = /\{[^}]+\}/g;
+      const matches = eventsString.match(objectRegex);
+      
+      if (matches && matches.length > 0) {
+        console.log('🔧 Objetos extraídos com regex:', matches);
+        
+        correctedEvents = matches.map(match => {
+          try {
+            return JSON.parse(match);
+          } catch (e) {
+            console.warn('⚠️ Falha ao fazer parse de objeto individual:', match);
+            return null;
+          }
+        }).filter(item => item !== null);
+        
+        console.log('✅ Objetos processados com regex:', correctedEvents);
+      } else {
+        console.log('❌ Não foi possível extrair objetos válidos');
+        return null;
+      }
+    }
+    
+    if (!correctedEvents || !Array.isArray(correctedEvents)) {
+      console.log('❌ JSON corrigido não é um array válido');
+      return null;
+    }
+    
+    // Agora processar os eventos corrigidos
+    const weeklyAvailability = {};
+    let currentEvent = {};
+    let eventIndex = 0;
+    
+    // Processar cada valor do array corrigido
+    correctedEvents.forEach((item, index) => {
+      if (item && item.value) {
+        const value = item.value;
+        console.log(`🔍 Item ${index}: ${value}`);
+        
+        // Cada 3 itens forma um evento completo
+        if (index % 3 === 0) {
+          // Novo evento
+          currentEvent = { name: value };
+          eventIndex = Math.floor(index / 3);
+          console.log(`🆕 Iniciando evento ${eventIndex + 1}: ${value}`);
+        } else if (index % 3 === 1) {
+          // Status do evento
+          currentEvent.status = value;
+          console.log(`📝 Evento ${eventIndex + 1} - Status: ${value}`);
+        } else if (index % 3 === 2) {
+          // Data do evento
+          currentEvent.start = value;
+          console.log(`📅 Evento ${eventIndex + 1} - Data: ${value}`);
+          
+          // Processar evento completo
+          if (currentEvent.name === "Atender" && currentEvent.status === "confirmed" && currentEvent.start) {
+            try {
+              const parsedDate = new Date(currentEvent.start);
+              const dateKey = parsedDate.toISOString().split('T')[0];
+              
+              console.log(`✅ Evento ${eventIndex + 1} processado - Dia: ${dateKey}`);
+              
+              weeklyAvailability[dateKey] = {
+                date: dateKey,
+                hasAvailability: true,
+                eventName: currentEvent.name,
+                eventStatus: currentEvent.status,
+                availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                bookedSlots: [],
+                message: 'Dia disponível para agendamento (JSON corrigido automaticamente)'
+              };
+              
+            } catch (error) {
+              console.warn(`⚠️ Erro ao processar data do evento ${eventIndex + 1}:`, currentEvent.start, error);
+            }
+          } else {
+            console.log(`⚠️ Evento ${eventIndex + 1} inválido:`, currentEvent);
+          }
+        }
+      }
+    });
+    
+    // Processar todos os dias da semana (incluindo dias sem eventos)
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      
+      if (!weeklyAvailability[dateStr]) {
+        weeklyAvailability[dateStr] = {
+          date: dateStr,
+          hasAvailability: false,
+          eventName: null,
+          eventStatus: null,
+          availableSlots: [],
+          bookedSlots: [],
+          message: 'Dados do Make.com processados - Sem eventos'
+        };
+      }
+    }
+    
+    console.log('📊 Disponibilidade semanal processada com JSON corrigido:', weeklyAvailability);
+    return weeklyAvailability;
+    
+  } catch (error) {
+    console.error('💥 Erro ao corrigir JSON malformado:', error);
     return null;
   }
 }
