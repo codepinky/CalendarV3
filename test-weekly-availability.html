@@ -170,6 +170,34 @@
                 log(`📊 Dados do backend: ${JSON.stringify(backendData, null, 2)}`);
 
                 if (backendResponse.ok) {
+                    // 🆕 PROCESSAR DADOS DO BACKEND
+                    const weeklyData = backendData.weeklyAvailability;
+                    const availableDays = [];
+                    const unavailableDays = [];
+                    
+                    // Separar dias disponíveis e não disponíveis
+                    Object.keys(weeklyData).forEach(date => {
+                        const day = weeklyData[date];
+                        if (day.hasAvailability) {
+                            availableDays.push({ date, ...day });
+                        } else {
+                            unavailableDays.push({ date, ...day });
+                        }
+                    });
+                    
+                    // Log detalhado dos dados processados
+                    log(`📊 Dados processados:`);
+                    log(`📅 Dias disponíveis: ${availableDays.length}`);
+                    log(`📅 Dias não disponíveis: ${unavailableDays.length}`);
+                    
+                    availableDays.forEach(day => {
+                        log(`✅ ${day.date}: ${day.eventName} (${day.eventStatus}) - Horários: ${day.availableSlots.join(', ')}`);
+                    });
+                    
+                    unavailableDays.forEach(day => {
+                        log(`❌ ${day.date}: ${day.eventName || 'Sem evento'} (${day.eventStatus || 'N/A'}) - ${day.message || 'Não disponível'}`);
+                    });
+                    
                     resultDiv.className = 'result success';
                     resultDiv.innerHTML = `
                         <h4>✅ Backend funcionando!</h4>
@@ -179,7 +207,31 @@
                         <p><strong>Data Final:</strong> ${backendData.endDate}</p>
                         <p><strong>Fonte:</strong> ${backendData.source}</p>
                         <p><strong>Nota:</strong> ${backendData.note}</p>
-                        <h5>Disponibilidade Semanal:</h5>
+                        
+                        <h5>📊 RESUMO PROCESSADO:</h5>
+                        <p><strong>Dias disponíveis:</strong> ${availableDays.length}</p>
+                        <p><strong>Dias não disponíveis:</strong> ${unavailableDays.length}</p>
+                        
+                        <h5>✅ DIAS DISPONÍVEIS:</h5>
+                        ${availableDays.length > 0 ? 
+                            availableDays.map(day => `
+                                <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: #e8f5e8;">
+                                    <strong>${day.date}</strong> - ${day.eventName} (${day.eventStatus})<br>
+                                    <strong>Horários:</strong> ${day.availableSlots.join(', ')}
+                                </div>
+                            `).join('') : 
+                            '<p>❌ Nenhum dia disponível nesta semana</p>'
+                        }
+                        
+                        <h5>❌ DIAS NÃO DISPONÍVEIS:</h5>
+                        ${unavailableDays.map(day => `
+                            <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: #ffe8e8;">
+                                <strong>${day.date}</strong> - ${day.eventName || 'Sem evento'} (${day.eventStatus || 'N/A'})<br>
+                                <strong>Motivo:</strong> ${day.message || 'Não disponível'}
+                            </div>
+                        `).join('')}
+                        
+                        <h5>🔍 DADOS BRUTOS (para debug):</h5>
                         <pre>${JSON.stringify(backendData.weeklyAvailability, null, 2)}</pre>
                     `;
                 } else {
