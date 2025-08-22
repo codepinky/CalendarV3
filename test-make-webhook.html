@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Direto - Webhook Make.com</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .date-input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Direto - Webhook Make.com</h1>
+        <p>Teste direto do webhook para ver exatamente o que está sendo retornado</p>
+
+        <div>
+            <label>Data Inicial: <input type="date" id="startDate" class="date-input" value="2025-08-24"></label>
+            <label>Data Final: <input type="date" id="endDate" class="date-input" value="2025-08-30"></label>
+        </div>
+        
+        <button class="test-button" onclick="testMakeWebhook()">🔍 Testar Webhook Make.com</button>
+        <button class="test-button" onclick="clearResult()">🗑️ Limpar</button>
+
+        <div>
+            <h3>📊 Resultado do Webhook</h3>
+            <div id="result" class="result">Clique em "Testar Webhook Make.com" para ver o resultado...</div>
+        </div>
+    </div>
+
+    <script>
+        async function testMakeWebhook() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!startDate || !endDate) {
+                resultDiv.textContent = '❌ Erro: Selecione as datas inicial e final';
+                return;
+            }
+
+            resultDiv.textContent = '🔄 Testando webhook do Make.com...';
+
+            try {
+                const webhookUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}`;
+                
+                resultDiv.textContent = `🔗 URL do webhook: ${webhookUrl}\n\n🔄 Fazendo requisição...`;
+
+                const response = await fetch(webhookUrl);
+                const data = await response.json();
+
+                resultDiv.textContent = `✅ Webhook funcionando!\n\n📡 Status: ${response.status}\n📡 OK: ${response.ok}\n\n📊 Dados recebidos:\n${JSON.stringify(data, null, 2)}\n\n🔍 Análise:\n- Tipo: ${typeof data}\n- Chaves: ${Object.keys(data).join(', ')}\n- Events existe: ${!!data.events}\n- Events é array: ${Array.isArray(data.events)}\n- Events length: ${data.events?.length || 'N/A'}`;
+
+            } catch (error) {
+                resultDiv.textContent = `💥 Erro ao testar webhook:\n\n${error.message}\n\nStack:\n${error.stack}`;
+            }
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = 'Clique em "Testar Webhook Make.com" para ver o resultado...';
+        }
+    </script>
+</body>
+</html>
