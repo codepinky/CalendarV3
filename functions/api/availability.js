@@ -301,7 +301,7 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         
-        // Se o dia não tem evento, não tem disponibilidade
+        // ✅ CORRIGIDO: Só processar dias que NÃO foram processados pelos eventos
         if (!weeklyAvailability[dateStr]) {
           weeklyAvailability[dateStr] = {
             date: dateStr,
@@ -309,9 +309,14 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
             eventName: null,
             eventStatus: null,
             availableSlots: [],
-            bookedSlots: []
+            bookedSlots: [],
+            message: 'Dados do Make.com processados - Sem eventos'
           };
           console.log(`📅 Dia ${dateStr}: Sem evento -> Sem disponibilidade`);
+        } else {
+          // ✅ NOVO: Log dos dias que JÁ foram processados pelos eventos
+          const day = weeklyAvailability[dateStr];
+          console.log(`📅 Dia ${dateStr}: JÁ processado -> ${day.eventName} (${day.eventStatus}) - Disponibilidade: ${day.hasAvailability}`);
         }
       }
       
