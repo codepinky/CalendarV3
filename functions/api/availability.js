@@ -10,39 +10,57 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   try {
     const url = new URL(request.url);
+    
+    // NOVO: Aceitar tanto date (antigo) quanto startDate/endDate (novo)
     const date = url.searchParams.get('date');
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
     
-    if (!date) {
+    console.log('🔍 Parâmetros recebidos:');
+    console.log('🔍 date:', date);
+    console.log('🔍 startDate:', startDate);
+    console.log('🔍 endDate:', endDate);
+    
+    // Verificar se é consulta semanal (startDate + endDate) ou diária (date)
+    if (startDate && endDate) {
+      console.log('🔄 Modo semanal detectado - consultando disponibilidade da semana');
+      return await handleWeeklyAvailability(startDate, endDate, context);
+    } else if (date) {
+      console.log('📅 Modo diário detectado - consultando disponibilidade de um dia');
+      return await handleDailyAvailability(date, context);
+    } else {
       return json({ 
         success: false, 
-        reason: 'Data não fornecida.' 
+        reason: 'Parâmetros inválidos. Use date=YYYY-MM-DD OU startDate=YYYY-MM-DD&endDate=YYYY-MM-DD' 
       }, 400, context);
     }
 
-    // Validar formato da data
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return json({ 
-        success: false, 
-        reason: 'Formato de data inválido. Use YYYY-MM-DD.' 
-      }, 400, context);
-    }
+    // Função para consulta diária (antiga funcionalidade)
+    async function handleDailyAvailability(date, context) {
+      // Validar formato da data
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return json({ 
+          success: false, 
+          reason: 'Formato de data inválido. Use YYYY-MM-DD.' 
+        }, 400, context);
+      }
 
-    // Consultar Make diretamente (URL que funcionou no teste)
-    const makeUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
-    console.log('🔍 Consultando Make para data:', date);
-    console.log('🔗 URL do Make:', makeUrl);
-    console.log('🔍 Data enviada para Make (formato):', date);
-    console.log('🔍 Data enviada para Make (objeto):', new Date(date));
-    console.log('🔍 Data enviada para Make (ISO):', new Date(date).toISOString());
-    
-    try {
-      // Fazer requisição direta para o Make
-      const availabilityResponse = await fetch(makeUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Consultar Make diretamente (URL que funcionou no teste)
+      const makeUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
+      console.log('🔍 Consultando Make para data:', date);
+      console.log('🔗 URL do Make:', makeUrl);
+      console.log('🔍 Data enviada para Make (formato):', date);
+      console.log('🔍 Data enviada para Make (objeto):', new Date(date));
+      console.log('🔍 Data enviada para Make (ISO):', new Date(date).toISOString());
+      
+      try {
+        // Fazer requisição direta para o Make
+        const availabilityResponse = await fetch(makeUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
         console.log('📡 Resposta do Make - Status:', availabilityResponse.status);
         console.log('📡 Resposta do Make - OK:', availabilityResponse.ok);
@@ -83,20 +101,66 @@ export async function onRequestGet(context) {
         console.error('💥 Erro ao consultar Make:', error);
       }
 
-    // Fallback: retornar horários padrão de trabalho (para desenvolvimento)
-    console.log('⚠️ Usando fallback - horários padrão de trabalho');
-    const fallbackSlots = generateDefaultTimeSlots(date);
-    
-    return json({
-      success: true,
-      date: date,
-      availableSlots: fallbackSlots,
-      bookedSlots: [],
-      timezone: 'America/Sao_Paulo',
-      lastUpdated: new Date().toISOString(),
-      note: 'Modo fallback - horários padrão de trabalho',
-      source: 'Fallback Mode'
-    }, 200, context);
+      // Fallback: retornar horários padrão de trabalho (para desenvolvimento)
+      console.log('⚠️ Usando fallback - horários padrão de trabalho');
+      const fallbackSlots = generateDefaultTimeSlots(date);
+      
+      return json({
+        success: true,
+        date: date,
+        availableSlots: fallbackSlots,
+        bookedSlots: [],
+        timezone: 'America/Sao_Paulo',
+        lastUpdated: new Date().toISOString(),
+        note: 'Modo fallback - horários padrão de trabalho',
+        source: 'Fallback Mode'
+      }, 200, context);
+    }
+
+    // Função para consulta semanal (nova funcionalidade)
+    async function handleWeeklyAvailability(startDate, endDate, context) {
+      // Validar formato das datas
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+        return json({ 
+          success: false, 
+          reason: 'Formato de data inválido. Use YYYY-MM-DD.' 
+        }, 400, context);
+      }
+
+      console.log('🔄 Iniciando consulta semanal para:', startDate, 'a', endDate);
+      
+      // Por enquanto, retornar dados simulados para teste
+      // TODO: Implementar consulta real ao Make para semana inteira
+      const weeklyAvailability = {};
+      
+      // Gerar dados para cada dia da semana
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        
+        // Simular disponibilidade (para teste)
+        weeklyAvailability[dateStr] = {
+          available: true,
+          slots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+          message: 'Horários disponíveis para teste'
+        };
+      }
+      
+      console.log('📊 Disponibilidade semanal gerada:', weeklyAvailability);
+      
+      return json({
+        success: true,
+        startDate: startDate,
+        endDate: endDate,
+        weeklyAvailability: weeklyAvailability,
+        timezone: 'America/Sao_Paulo',
+        lastUpdated: new Date().toISOString(),
+        source: 'Weekly Availability (Test Mode)',
+        note: 'Modo de teste - dados simulados'
+      }, 200, context);
+    }
 
   } catch (e) {
     console.error('Erro ao verificar disponibilidade:', e);
