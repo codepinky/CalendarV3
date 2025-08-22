@@ -148,12 +148,54 @@ export async function onRequestGet(context) {
 
         if (availabilityResponse.ok) {
           const makeData = await availabilityResponse.json().catch(() => ({}));
-          console.log('📅 Dados recebidos do Make.com:', makeData);
+          
+          // 🆕 LOGS DETALHADOS PARA DEBUG
+          console.log('🔍 ===== DADOS RECEBIDOS DO MAKE.COM =====');
+          console.log('📅 Dados brutos do Make.com:', JSON.stringify(makeData, null, 2));
+          console.log('📅 Tipo dos dados:', typeof makeData);
+          console.log('📅 Chaves disponíveis:', Object.keys(makeData));
+          
+          if (makeData.events && Array.isArray(makeData.events)) {
+            console.log('📅 Total de eventos recebidos:', makeData.events.length);
+            makeData.events.forEach((event, index) => {
+              console.log(`📅 Evento ${index + 1}:`, {
+                name: event.name,
+                status: event.status,
+                start: event.start,
+                end: event.end,
+                raw: event
+              });
+            });
+          }
+          
+          if (makeData.weeklyAvailability) {
+            console.log('📅 Dados estruturados recebidos:', JSON.stringify(makeData.weeklyAvailability, null, 2));
+          }
+          
+          console.log('🔍 ===== FIM DOS DADOS DO MAKE.COM =====');
           
           // Processar dados do Make.com para disponibilidade semanal
           const weeklyAvailability = processWeeklyMakeData(makeData, startDate, endDate);
           
           console.log('📊 Disponibilidade semanal processada:', weeklyAvailability);
+          
+          // 🆕 LOGS DETALHADOS PARA DEBUG - RESPOSTA PARA O FRONTEND
+          console.log('🔍 ===== RESPOSTA ENVIADA PARA O FRONTEND =====');
+          console.log('📊 Disponibilidade semanal processada:', JSON.stringify(weeklyAvailability, null, 2));
+          console.log('📊 Total de dias processados:', Object.keys(weeklyAvailability).length);
+          
+          Object.keys(weeklyAvailability).forEach(date => {
+            const day = weeklyAvailability[date];
+            console.log(`📅 ${date}:`, {
+              hasAvailability: day.hasAvailability,
+              eventName: day.eventName,
+              eventStatus: day.eventStatus,
+              availableSlots: day.availableSlots,
+              message: day.message
+            });
+          });
+          
+          console.log('🔍 ===== FIM DA RESPOSTA PARA O FRONTEND =====');
           
           return json({
             success: true,
