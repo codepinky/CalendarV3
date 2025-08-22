@@ -154,6 +154,9 @@ export async function onRequestGet(context) {
           console.log('📅 Dados brutos do Make.com:', JSON.stringify(makeData, null, 2));
           console.log('📅 Tipo dos dados:', typeof makeData);
           console.log('📅 Chaves disponíveis:', Object.keys(makeData));
+          console.log('🔍 makeData.events existe?', !!makeData.events);
+          console.log('🔍 makeData.events é array?', Array.isArray(makeData.events));
+          console.log('🔍 makeData.events.length:', makeData.events?.length || 'N/A');
           
           if (makeData.events && Array.isArray(makeData.events)) {
             console.log('📅 Total de eventos recebidos:', makeData.events.length);
@@ -254,6 +257,11 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
     }
     
           // NOVO: Se o Make.com retornar eventos simples (nome, status, start, end)
+      console.log('🔍 Verificando se makeData.events existe e é array...');
+      console.log('🔍 makeData:', !!makeData);
+      console.log('🔍 makeData.events:', !!makeData.events);
+      console.log('🔍 Array.isArray(makeData.events):', Array.isArray(makeData.events));
+      
       if (makeData && makeData.events && Array.isArray(makeData.events)) {
         console.log('✅ Eventos simples recebidos do Make.com:', makeData.events.length);
         
@@ -356,6 +364,7 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
     }
     
     // Se o Make.com retornar dados em formato diferente
+    console.log('🔍 Nenhum evento encontrado, verificando formato alternativo...');
     if (makeData && typeof makeData === 'object') {
       console.log('⚠️ Formato de dados não reconhecido, retornando dados básicos');
       
