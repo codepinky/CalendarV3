@@ -331,10 +331,10 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
               console.log(`🔍 Evento ${index + 1} - Nome: "${event.name}"`);
               console.log(`🔍 Evento ${index + 1} - Status: "${event.status}"`);
               
-              // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
-              const isAvailable = true;
+              // ✅ CORRIGIDO: Lógica de disponibilidade baseada no status do evento
+              const isAvailable = cleanEventStatus === 'confirmed' || cleanEventStatus === 'Atender';
               
-              console.log(`🔍 Evento ${index + 1} - isAvailable: ${isAvailable}`);
+              console.log(`🔍 Evento ${index + 1} - isAvailable: ${isAvailable} (Status: ${cleanEventStatus})`);
               
               if (!weeklyAvailability[dateKey]) {
                 weeklyAvailability[dateKey] = {
@@ -342,9 +342,9 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
                   hasAvailability: isAvailable,
                   eventName: cleanEventName || 'Evento',
                   eventStatus: cleanEventStatus || 'Agendado',
-                  availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                  availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
                   bookedSlots: [],
-                  message: 'Dia disponível para agendamento'
+                  message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível'
                 };
                 console.log(`✅ Dia ${dateKey} CRIADO com disponibilidade: ${isAvailable}`);
               } else {
@@ -352,8 +352,8 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
                 weeklyAvailability[dateKey].hasAvailability = isAvailable;
                 weeklyAvailability[dateKey].eventName = cleanEventName || 'Evento';
                 weeklyAvailability[dateKey].eventStatus = cleanEventStatus || 'Agendado';
-                weeklyAvailability[dateKey].availableSlots = isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [];
-                weeklyAvailability[dateKey].message = 'Dia disponível para agendamento';
+                weeklyAvailability[dateKey].availableSlots = isAvailable ? generateDynamicTimeSlots(dateKey) : [];
+                weeklyAvailability[dateKey].message = isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível';
                 console.log(`🔄 Dia ${dateKey} ATUALIZADO com disponibilidade: ${isAvailable}`);
               }
               
@@ -513,7 +513,7 @@ function processConcatenatedFormat(makeData, startDate, endDate) {
                 hasAvailability: isAvailable,
                 eventName: hasAtender ? 'Atender' : 'Evento',
                 eventStatus: hasAtender ? 'confirmed' : 'Agendado',
-                availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                                  availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
                 bookedSlots: [],
                 message: isAvailable ? 'Dia disponível para agendamento (formato concatenado processado)' : 'Dia não disponível',
                 rawValue: concatenatedValue // Para debug
@@ -608,7 +608,7 @@ function processCompactMakeData(makeData, startDate, endDate) {
                   hasAvailability: true,
                   eventName: currentEvent.name || 'Evento',
                   eventStatus: currentEvent.status || 'Agendado',
-                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  availableSlots: generateDynamicTimeSlots(dateKey),
                   bookedSlots: [],
                   message: 'Dia disponível para agendamento (formato separado processado)'
                 };
@@ -679,7 +679,7 @@ function processCompactMakeData(makeData, startDate, endDate) {
               hasAvailability: true,
               eventName: eventName,
               eventStatus: eventStatus,
-              availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+              availableSlots: generateDynamicTimeSlots(dateKey),
               bookedSlots: [],
               message: 'Dia disponível para agendamento (formato compacto)'
             };
@@ -825,7 +825,7 @@ function processMalformedJSON(makeData, startDate, endDate) {
                   hasAvailability: true,
                   eventName: currentEvent.name || 'Evento',
                   eventStatus: currentEvent.status || 'Agendado',
-                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  availableSlots: generateDynamicTimeSlots(dateKey),
                   bookedSlots: [],
                   message: 'Dia disponível para agendamento (JSON corrigido automaticamente)'
                 };
@@ -937,7 +937,7 @@ function processFallbackMakeData(makeData, startDate, endDate) {
                   hasAvailability: true,
                   eventName: currentEvent.name || 'Evento',
                   eventStatus: currentEvent.status || 'Agendado',
-                  availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+                  availableSlots: generateDynamicTimeSlots(dateKey),
                   bookedSlots: [],
                   message: 'Dia disponível para agendamento (fallback processado)'
                 };
@@ -971,7 +971,7 @@ function processFallbackMakeData(makeData, startDate, endDate) {
               hasAvailability: true,
               eventName: "Atender",
               eventStatus: "confirmed",
-              availableSlots: ['13:30', '15:30', '17:30', '19:30', '21:30'],
+              availableSlots: generateDynamicTimeSlots(dateKey),
               bookedSlots: [],
               message: 'Dia disponível para agendamento (datas extraídas por regex)'
             };
@@ -1248,6 +1248,46 @@ function generateDefaultTimeSlots(date) {
   }
   
   return slots;
+}
+
+// ✅ NOVA FUNÇÃO: Gerar horários dinâmicos baseados na data
+function generateDynamicTimeSlots(dateStr) {
+  try {
+    const date = new Date(dateStr);
+    const dayOfWeek = date.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+    
+    // Configurações de horários por dia da semana
+    const timeConfig = {
+      0: { start: 14, end: 20, interval: 1 }, // Domingo: 14:30 - 19:30
+      1: { start: 13, end: 22, interval: 1 }, // Segunda: 13:30 - 21:30
+      2: { start: 13, end: 22, interval: 1 }, // Terça: 13:30 - 21:30
+      3: { start: 13, end: 22, interval: 1 }, // Quarta: 13:30 - 21:30
+      4: { start: 13, end: 22, interval: 1 }, // Quinta: 13:30 - 21:30
+      5: { start: 14, end: 21, interval: 1 }, // Sexta: 14:30 - 20:30
+      6: { start: 14, end: 20, interval: 1 }  // Sábado: 14:30 - 19:30
+    };
+    
+    const config = timeConfig[dayOfWeek] || timeConfig[1]; // Padrão: Segunda-feira
+    const slots = [];
+    
+    for (let hour = config.start; hour < config.end; hour += config.interval) {
+      const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
+      slots.push(timeSlot);
+    }
+    
+    console.log(`📅 Horários dinâmicos para ${dateStr} (${getDayName(dayOfWeek)}): ${slots.join(', ')}`);
+    return slots;
+    
+  } catch (error) {
+    console.warn('⚠️ Erro ao gerar horários dinâmicos, usando padrão:', error);
+    return generateDefaultTimeSlots(dateStr);
+  }
+}
+
+// Função auxiliar para nome do dia
+function getDayName(dayOfWeek) {
+  const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  return days[dayOfWeek] || 'Desconhecido';
 }
 
 function json(payload, status = 200, context) {
