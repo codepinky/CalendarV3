@@ -769,9 +769,23 @@ Motivo: ${data.reason || 'Agendamento via site'}`,
     // A lógica de atualização do cache foi removida, pois não há mais variáveis de cache
     // A geração de horários agora é feita diretamente com a chamada da API
     
-    // NÃO selecionar automaticamente nenhuma data após agendamento
-    // Deixar o usuário escolher uma nova data se quiser agendar novamente
-    console.log('✅ Agendamento concluído. Nenhuma data selecionada automaticamente.');
+    // Atualizar horários da data que foi agendada para refletir a ocupação
+    // Mas sem selecionar automaticamente nenhuma data
+    if (data['date']) {
+      console.log(`🔄 Atualizando horários da data ${data['date']} após agendamento...`);
+      // Temporariamente definir a data para atualizar os horários
+      const tempDateField = document.getElementById('date');
+      const originalDate = tempDateField.value;
+      tempDateField.value = data['date'];
+      
+      // Atualizar horários para mostrar que o horário foi ocupado
+      generateTimeSlots();
+      
+      // Restaurar campo vazio
+      tempDateField.value = '';
+    }
+    
+    console.log('✅ Agendamento concluído. Horários atualizados, nenhuma data selecionada automaticamente.');
     
   } catch (error) {
     console.error('Erro no agendamento:', error);
