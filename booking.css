@@ -535,6 +535,48 @@ h1 {
   background: linear-gradient(90deg, #9f7aea, #f687b3, #f6ad55);
 }
 
+/* Redes Sociais */
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.social-icon:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.social-icon .icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.social-icon.whatsapp .icon {
+  color: #25d366;
+}
+
+.social-icon.instagram .icon {
+  color: #e4405f;
+}
+
+.social-icon.twitter .icon {
+  color: #1da1f2;
+}
+
 /* Formulário */
 .form-group {
   margin-bottom: 20px;
