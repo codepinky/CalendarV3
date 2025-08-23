@@ -576,20 +576,14 @@ function generateDefaultTimeSlots(date) {
 
 function generateDynamicTimeSlots(dateStr) {
   try {
-    // TESTE: Sempre retornar todos os 5 horários para debug
+    // CORREÇÃO: Para eventos "Atender", retornar TODOS os horários independente de ocupações
+    // Eventos "Atender" são para criar disponibilidade, não para bloquear
     const allSlots = ['13:30', '15:30', '17:30', '19:30', '21:30'];
     
-    // DEBUG TIMEZONE: Verificar horário atual no servidor
-    const now = new Date();
-    const serverTime = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const utcTime = now.toUTCString();
-    
     console.log(`🕐 DEBUG generateDynamicTimeSlots para ${dateStr}:`);
-    console.log(`   - Horário servidor (UTC): ${utcTime}`);
-    console.log(`   - Horário servidor (Brasília): ${serverTime}`);
-    console.log(`   - TESTE: Retornando SEMPRE todos os horários:`, allSlots);
-    console.log(`   - Incluindo 13:30? ${allSlots.includes('13:30')}`);
-    console.log(`   - Incluindo 15:30? ${allSlots.includes('15:30')}`);
+    console.log(`   - Tipo: Evento "Atender" - horários fixos independente de ocupações`);
+    console.log(`   - Horários retornados:`, allSlots);
+    console.log(`   - TODOS os 5 horários disponíveis para agendamento`);
     
     return allSlots;
     
