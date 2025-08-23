@@ -1,0 +1,5 @@
+[33m517fb2e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mDev[m[33m, [m[1;31morigin/Dev[m[33m)[m Corrigir ordenação cronológica dos dias e exibição de todos os dias disponíveis
+[33m1fc7891[m Atualizações na funcionalidade de agendamento
+[33mc553ed3[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m Fix: Adicionar parâmetro de data na checagem diária do Make
+[33meb410a7[m Fix: Remover lógica de horários adjacentes completamente
+[33m317068f[m Fix: Resolver problema de horários adjacentes a eventos ocupados

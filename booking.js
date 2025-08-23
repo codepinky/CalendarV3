@@ -527,6 +527,10 @@ function generateDateSlotsFromAvailability(availabilityData) {
   console.log('📅 DEBUG - Ano atual:', currentYear);
   console.log('📅 Gerando slots baseado em availability:', availabilityData);
   
+  // DEBUG: Verificar todas as chaves recebidas da API
+  console.log('🔍 DEBUG - Todas as chaves recebidas da API:', Object.keys(availabilityData));
+  console.log('🔍 DEBUG - Chaves com hasAvailability=true:', Object.keys(availabilityData).filter(key => availabilityData[key].hasAvailability === true));
+  
   // Converter object para array e ordenar por data CRONOLOGICAMENTE
   const availableDays = Object.keys(availabilityData)
     .filter(dateKey => {
@@ -580,6 +584,7 @@ function generateDateSlotsFromAvailability(availabilityData) {
     });
   
   console.log('📅 Dias disponíveis filtrados e ordenados:', availableDays);
+  console.log('📅 Total de dias disponíveis após filtro:', availableDays.length);
   
   if (availableDays.length === 0) {
     showAvailabilityError('Nenhum dia disponível encontrado para este mês.');
@@ -587,7 +592,7 @@ function generateDateSlotsFromAvailability(availabilityData) {
   }
   
   // Gerar um slot para cada dia disponível
-  availableDays.forEach(dateKey => {
+  availableDays.forEach((dateKey, index) => {
     const dayData = availabilityData[dateKey];
     // CORREÇÃO: Usar a mesma lógica de criação de data
     const [year, month, day] = dateKey.split('-').map(Number);
@@ -596,7 +601,7 @@ function generateDateSlotsFromAvailability(availabilityData) {
     const dayNum = date.getDate();
     const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
     
-    console.log(`✅ Criando slot para: ${dateKey} (${dayData.eventName})`);
+    console.log(`✅ Criando slot ${index + 1}/${availableDays.length} para: ${dateKey} (${dayData.eventName})`);
     
     const dateSlot = document.createElement('div');
     dateSlot.className = 'date-slot available';
