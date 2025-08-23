@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Verificação de Eventos "Agendar"</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        
+        input[type="date"] {
+            width: 200px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .day-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .day-card.available {
+            border-left: 4px solid #27ae60;
+        }
+        
+        .day-card.unavailable {
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .day-date {
+            font-weight: bold;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        
+        .day-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-available {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .status-unavailable {
+            background-color: #fadbd8;
+            color: #e74c3c;
+        }
+        
+        .time-slots {
+            margin-top: 10px;
+        }
+        
+        .time-slot {
+            display: inline-block;
+            background-color: #ecf0f1;
+            padding: 5px 10px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #34495e;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .error {
+            background-color: #fadbd8;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .info {
+            background-color: #d6eaf8;
+            color: #2874a6;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificação de Eventos "Agendar"</h1>
+        
+        <div class="info">
+            <strong>Como funciona:</strong> Esta funcionalidade verifica quais dias da semana têm eventos chamados "Agendar" ativos no Google Calendar através do Make.com.
+        </div>
+        
+        <div class="form-group">
+            <label for="startDate">Data de Início da Semana:</label>
+            <input type="date" id="startDate" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="endDate">Data de Fim da Semana:</label>
+            <input type="date" id="endDate" required>
+        </div>
+        
+        <div class="form-group">
+            <button onclick="setCurrentWeek()">Semana Atual</button>
+            <button onclick="setNextWeek()">Próxima Semana</button>
+            <button onclick="checkAvailability()" id="checkBtn">Verificar Disponibilidade</button>
+        </div>
+        
+        <div id="results" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Configurar datas padrão (semana atual)
+        window.onload = function() {
+            setCurrentWeek();
+        };
+        
+        function setCurrentWeek() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay()); // Domingo
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
+            
+            document.getElementById('startDate').value = startOfWeek.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfWeek.toISOString().split('T')[0];
+        }
+        
+        function setNextWeek() {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 7); // Próximo domingo
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // Próximo sábado
+            
+            document.getElementById('startDate').value = startOfWeek.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endOfWeek.toISOString().split('T')[0];
+        }
+        
+        async function checkAvailability() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('Por favor, selecione as datas de início e fim da semana.');
+                return;
+            }
+            
+            const checkBtn = document.getElementById('checkBtn');
+            const resultsDiv = document.getElementById('results');
+            
+            // Mostrar loading
+            checkBtn.disabled = true;
+            checkBtn.textContent = 'Verificando...';
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">Verificando disponibilidade...</div>';
+            
+            try {
+                const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="error"><strong>Erro:</strong> ${data.reason}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error"><strong>Erro de conexão:</strong> ${error.message}</div>`;
+            } finally {
+                checkBtn.disabled = false;
+                checkBtn.textContent = 'Verificar Disponibilidade';
+            }
+        }
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const availability = data.agendarAvailability;
+            
+            let html = `
+                <div class="results">
+                    <h3>📅 Disponibilidade da Semana</h3>
+                    <p><strong>Período:</strong> ${formatDate(data.startDate)} a ${formatDate(data.endDate)}</p>
+                    <p><strong>Fonte:</strong> ${data.source}</p>
+                    <p><strong>Última atualização:</strong> ${formatDateTime(data.lastUpdated)}</p>
+                    <hr>
+            `;
+            
+            // Ordenar dias por data
+            const sortedDays = Object.keys(availability).sort();
+            
+            sortedDays.forEach(date => {
+                const day = availability[date];
+                const isAvailable = day.hasAvailability;
+                const statusClass = isAvailable ? 'available' : 'unavailable';
+                const statusText = isAvailable ? 'Disponível' : 'Indisponível';
+                const statusColor = isAvailable ? 'status-available' : 'status-unavailable';
+                
+                html += `
+                    <div class="day-card ${statusClass}">
+                        <div class="day-header">
+                            <div class="day-date">${formatDate(date)} - ${getDayName(date)}</div>
+                            <div class="day-status ${statusColor}">${statusText}</div>
+                        </div>
+                        <p><strong>Status:</strong> ${day.eventName || 'Nenhum evento'}</p>
+                        <p><strong>Mensagem:</strong> ${day.message}</p>
+                `;
+                
+                if (isAvailable && day.availableSlots && day.availableSlots.length > 0) {
+                    html += `
+                        <div class="time-slots">
+                            <strong>Horários disponíveis:</strong><br>
+                            ${day.availableSlots.map(slot => `<span class="time-slot">${slot}</span>`).join('')}
+                        </div>
+                    `;
+                }
+                
+                if (day.eventDetails) {
+                    html += `
+                        <p><strong>Detalhes:</strong> ${day.eventDetails.description}</p>
+                    `;
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+        
+        function formatDateTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function getDayName(dateString) {
+            const date = new Date(dateString);
+            const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            return days[date.getDay()];
+        }
+    </script>
+</body>
+</html>
