@@ -262,15 +262,25 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
       console.log('🔍 makeData.events:', !!makeData.events);
       console.log('🔍 Array.isArray(makeData.events):', Array.isArray(makeData.events));
       
-      // 🆕 TRATAMENTO AUTOMÁTICO PARA JSON MALFORMADO (DEVE SER PRIMEIRO!)
-      if (makeData && typeof makeData.events === 'string') {
-        console.log('🔧 JSON malformado detectado, tentando corrigir automaticamente...');
-        const correctedResult = processMalformedJSON(makeData, startDate, endDate);
-        if (correctedResult) {
-          console.log('✅ JSON malformado corrigido e processado com sucesso');
-          return correctedResult;
-        }
-      }
+             // 🆕 TRATAMENTO AUTOMÁTICO PARA JSON MALFORMADO (DEVE SER PRIMEIRO!)
+       if (makeData && typeof makeData.events === 'string') {
+         console.log('🔧 JSON malformado detectado, tentando corrigir automaticamente...');
+         const correctedResult = processMalformedJSON(makeData, startDate, endDate);
+         if (correctedResult) {
+           console.log('✅ JSON malformado corrigido e processado com sucesso');
+           return correctedResult;
+         }
+       }
+
+       // 🆕 NOVO: TRATAMENTO PARA FORMATO CONCATENADO: {"value":"dataAtenderdata"}
+       if (makeData && makeData.events && Array.isArray(makeData.events)) {
+         console.log('🔍 Verificando formato concatenado...');
+         const concatenatedResult = processConcatenatedFormat(makeData, startDate, endDate);
+         if (concatenatedResult) {
+           console.log('✅ Formato concatenado processado com sucesso');
+           return concatenatedResult;
+         }
+       }
 
       // 🆕 TRATAMENTO PARA FORMATO COMPACTO: {"value":"Atender,confirmed,2025-08-25T13:30:00.000Z"}
       if (makeData && makeData.events && makeData.events.value && typeof makeData.events.value === 'string') {
@@ -463,6 +473,93 @@ function processWeeklyMakeData(makeData, startDate, endDate) {
 }
 
 
+
+// 🆕 NOVA FUNÇÃO: Processar formato concatenado {"value":"dataAtenderdata"}
+function processConcatenatedFormat(makeData, startDate, endDate) {
+  try {
+    console.log('🔍 Processando formato concatenado do Make.com:', makeData);
+    
+    // Verificar se é o formato: [{"value":"dataAtenderdata"}]
+    if (makeData && makeData.events && Array.isArray(makeData.events)) {
+      console.log('✅ Array de valores concatenados detectado:', makeData.events.length);
+      
+      const weeklyAvailability = {};
+      
+      // Processar cada item concatenado
+      makeData.events.forEach((item, index) => {
+        if (item && item.value && typeof item.value === 'string') {
+          const concatenatedValue = item.value;
+          console.log(`🔍 Item ${index + 1} concatenado: ${concatenatedValue}`);
+          
+          // Extrair informações usando regex
+          // Formato esperado: "2025-08-25T13:30:00.000ZAtender2025-08-25T13:30:00.000Z"
+          const dateRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
+          const dates = concatenatedValue.match(dateRegex);
+          
+          if (dates && dates.length >= 1) {
+            try {
+              // Usar a primeira data encontrada
+              const eventDate = new Date(dates[0]);
+              const dateKey = eventDate.toISOString().split('T')[0];
+              
+              console.log(`✅ Data extraída do item ${index + 1}: ${dateKey}`);
+              
+              // Verificar se contém "Atender" (ou qualquer texto que indique disponibilidade)
+              const hasAtender = concatenatedValue.includes('Atender');
+              const isAvailable = hasAtender; // Se tem "Atender", está disponível
+              
+              weeklyAvailability[dateKey] = {
+                date: dateKey,
+                hasAvailability: isAvailable,
+                eventName: hasAtender ? 'Atender' : 'Evento',
+                eventStatus: hasAtender ? 'confirmed' : 'Agendado',
+                availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                bookedSlots: [],
+                message: isAvailable ? 'Dia disponível para agendamento (formato concatenado processado)' : 'Dia não disponível',
+                rawValue: concatenatedValue // Para debug
+              };
+              
+              console.log(`✅ Dia ${dateKey} processado: Disponibilidade = ${isAvailable}`);
+              
+            } catch (error) {
+              console.warn(`⚠️ Erro ao processar data do item ${index + 1}:`, dates[0], error);
+            }
+          } else {
+            console.warn(`⚠️ Nenhuma data válida encontrada no item ${index + 1}:`, concatenatedValue);
+          }
+        }
+      });
+      
+      // Processar todos os dias da semana (incluindo dias sem eventos)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        
+        if (!weeklyAvailability[dateStr]) {
+          weeklyAvailability[dateStr] = {
+            date: dateStr,
+            hasAvailability: false,
+            eventName: null,
+            eventStatus: null,
+            availableSlots: [],
+            bookedSlots: [],
+            message: 'Dados do Make.com processados - Sem eventos'
+          };
+        }
+      }
+      
+      console.log('📊 Disponibilidade semanal processada a partir de formato concatenado:', weeklyAvailability);
+      return weeklyAvailability;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('💥 Erro ao processar formato concatenado:', error);
+    return null;
+  }
+}
 
 // Função para processar dados compactos do Make.com
 function processCompactMakeData(makeData, startDate, endDate) {

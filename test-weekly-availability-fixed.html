@@ -334,45 +334,92 @@
                     return makeData.weeklyAvailability;
                 }
                 
-                // Se o Make retornar eventos simples
-                if (makeData && makeData.events && Array.isArray(makeData.events)) {
-                    log(`✅ Eventos simples recebidos do Make: ${makeData.events.length}`);
-                    
-                    const weeklyAvailability = {};
-                    
-                    // Processar cada evento
-                    makeData.events.forEach((event, index) => {
-                        log(`🔍 Processando evento ${index + 1}:`, event);
-                        
-                        // Limpar possíveis aspas extras
-                        const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
-                        const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
-                        
-                        if (event.start) {
-                            try {
-                                const eventDate = new Date(event.start);
-                                const dateKey = eventDate.toISOString().split('T')[0];
-                                
-                                // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
-                                const isAvailable = true;
-                                
-                                weeklyAvailability[dateKey] = {
-                                    date: dateKey,
-                                    hasAvailability: isAvailable,
-                                    eventName: cleanEventName || 'Evento',
-                                    eventStatus: cleanEventStatus || 'Agendado',
-                                    availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
-                                    bookedSlots: [],
-                                    message: 'Dia disponível para agendamento'
-                                };
-                                
-                                log(`✅ Dia ${dateKey} processado: Evento encontrado -> Disponibilidade: ${isAvailable}`);
-                                
-                            } catch (error) {
-                                log(`⚠️ Erro ao processar evento ${index + 1}:`, error);
-                            }
-                        }
-                    });
+                                 // Se o Make retornar eventos simples
+                 if (makeData && makeData.events && Array.isArray(makeData.events)) {
+                   log(`✅ Eventos simples recebidos do Make: ${makeData.events.length}`);
+                   
+                   const weeklyAvailability = {};
+                   
+                   // 🆕 NOVO: Verificar se é formato concatenado primeiro
+                   const firstItem = makeData.events[0];
+                   if (firstItem && firstItem.value && typeof firstItem.value === 'string') {
+                     // Formato concatenado detectado: {"value":"dataAtenderdata"}
+                     log(`🔍 Formato concatenado detectado, processando...`);
+                     
+                     makeData.events.forEach((item, index) => {
+                       if (item && item.value && typeof item.value === 'string') {
+                         const concatenatedValue = item.value;
+                         log(`🔍 Item ${index + 1} concatenado: ${concatenatedValue}`);
+                         
+                         // Extrair data usando regex
+                         const dateRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
+                         const dates = concatenatedValue.match(dateRegex);
+                         
+                         if (dates && dates.length >= 1) {
+                           try {
+                             const eventDate = new Date(dates[0]);
+                             const dateKey = eventDate.toISOString().split('T')[0];
+                             
+                             // Verificar se contém "Atender"
+                             const hasAtender = concatenatedValue.includes('Atender');
+                             const isAvailable = hasAtender;
+                             
+                             weeklyAvailability[dateKey] = {
+                               date: dateKey,
+                               hasAvailability: isAvailable,
+                               eventName: hasAtender ? 'Atender' : 'Evento',
+                               eventStatus: hasAtender ? 'confirmed' : 'Agendado',
+                               availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                               bookedSlots: [],
+                               message: 'Dia disponível para agendamento (formato concatenado)',
+                               rawValue: concatenatedValue
+                             };
+                             
+                             log(`✅ Dia ${dateKey} processado: Disponibilidade = ${isAvailable}`);
+                             
+                           } catch (error) {
+                             log(`⚠️ Erro ao processar item ${index + 1}:`, error);
+                           }
+                         }
+                       }
+                     });
+                   } else {
+                     // Formato normal: {name, status, start}
+                     log(`🔍 Formato normal detectado, processando...`);
+                     
+                     makeData.events.forEach((event, index) => {
+                       log(`🔍 Processando evento ${index + 1}:`, event);
+                       
+                       // Limpar possíveis aspas extras
+                       const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
+                       const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
+                       
+                       if (event.start) {
+                         try {
+                           const eventDate = new Date(event.start);
+                           const dateKey = eventDate.toISOString().split('T')[0];
+                           
+                           // 🆕 SIMPLIFICADO: Se tem evento na data, está disponível
+                           const isAvailable = true;
+                           
+                           weeklyAvailability[dateKey] = {
+                             date: dateKey,
+                             hasAvailability: isAvailable,
+                             eventName: cleanEventName || 'Evento',
+                             eventStatus: cleanEventStatus || 'Agendado',
+                             availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                             bookedSlots: [],
+                             message: 'Dia disponível para agendamento'
+                           };
+                           
+                           log(`✅ Dia ${dateKey} processado: Evento encontrado -> Disponibilidade: ${isAvailable}`);
+                           
+                         } catch (error) {
+                           log(`⚠️ Erro ao processar evento ${index + 1}:`, error);
+                         }
+                       }
+                     });
+                   }
                     
                     // Processar todos os dias da semana (incluindo dias sem eventos)
                     const start = new Date(startDate);
