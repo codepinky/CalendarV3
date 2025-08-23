@@ -225,12 +225,12 @@
                                             eventStatus: hasConfirmed ? 'confirmed' : 'Agendado',
                                             availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                                             bookedSlots: [],
-                                            message: isAvailable ? 'Dia disponível para agendamento (status confirmed)' : 'Dia não disponível (status não confirmed)',
+                                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam Atender ou confirmed)',
                                             rawValue: concatenatedValue,
                                             requirements: {
                                                 hasAtender: hasAtender,
                                                 hasConfirmed: hasConfirmed,
-                                                availabilityBasedOn: 'confirmed'
+                                                availabilityBasedOn: 'Ambos: Atender + confirmed'
                                             }
                                         };
                                         
