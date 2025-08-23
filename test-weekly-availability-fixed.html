@@ -190,20 +190,28 @@
                 // Processar dados do Make
                 if (makeData && makeData.events && Array.isArray(makeData.events)) {
                     log(`✅ Array de eventos detectado: ${makeData.events.length}`);
+                    log(`🔍 Primeiro item:`, firstItem);
                     
                     // Verificar formato concatenado
                     const firstItem = makeData.events[0];
+                    log(`🔍 Verificando formato concatenado...`);
+                    log(`🔍 firstItem existe: ${!!firstItem}`);
+                    log(`🔍 firstItem.value existe: ${!!(firstItem && firstItem.value)}`);
+                    log(`🔍 firstItem.value é string: ${firstItem && firstItem.value && typeof firstItem.value === 'string'}`);
+                    
                     if (firstItem && firstItem.value && typeof firstItem.value === 'string') {
                         log(`🔍 Formato concatenado detectado, processando...`);
                         
                         makeData.events.forEach((item, index) => {
+                            log(`🔍 Processando item ${index + 1}:`, item);
                             if (item && item.value && typeof item.value === 'string') {
                                 const concatenatedValue = item.value;
-                                log(`🔍 Processando item ${index + 1}: ${concatenatedValue}`);
+                                log(`🔍 Valor concatenado: ${concatenatedValue}`);
                                 
                                 // Extrair data usando regex
                                 const dateRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
                                 const dates = concatenatedValue.match(dateRegex);
+                                log(`🔍 Datas encontradas:`, dates);
                                 
                                 if (dates && dates.length >= 1) {
                                     try {
