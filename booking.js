@@ -85,14 +85,35 @@ async function checkWeeklyAvailability(startDate, endDate) {
   try {
     console.log('🔄 Consultando disponibilidade da semana:', startDate, 'a', endDate);
     
-    const response = await fetch(`/api/availability?startDate=${startDate}&endDate=${endDate}`);
+    // NOVA: Usar a funcionalidade de eventos "Atender"
+    const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`);
     const data = await response.json();
     
-    if (data.success) {
-      console.log('✅ Disponibilidade semanal recebida:', data);
-      return data;
+    if (data.success && data.agendarAvailability) {
+      console.log('✅ Disponibilidade de eventos "Atender" recebida:', data);
+      
+      // Converter formato para compatibilidade com código existente
+      const weeklyAvailability = {};
+      Object.keys(data.agendarAvailability).forEach(date => {
+        const dayData = data.agendarAvailability[date];
+        weeklyAvailability[date] = {
+          available: dayData.hasAvailability,
+          slots: dayData.availableSlots || [],
+          message: dayData.message,
+          eventName: dayData.eventName
+        };
+      });
+      
+      console.log('🔄 Dados convertidos para formato compatível:', weeklyAvailability);
+      
+      return {
+        success: true,
+        weeklyAvailability: weeklyAvailability,
+        source: data.source,
+        lastUpdated: data.lastUpdated
+      };
     } else {
-      console.error('❌ Erro ao verificar disponibilidade semanal:', data.reason);
+      console.error('❌ Erro ao verificar disponibilidade de eventos Atender:', data.reason);
       return null;
     }
   } catch (error) {
