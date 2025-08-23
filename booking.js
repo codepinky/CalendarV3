@@ -213,6 +213,256 @@ function generateDefaultTimeSlots(date) {
   return ['13:30', '15:30', '17:30', '19:30', '21:30'];
 }
 
+// Função para gerar mensagens amigáveis quando não há horários disponíveis
+function generateFriendlyNoSlotsMessage(availability, selectedDate) {
+  const today = new Date();
+  const [selectedYear, selectedMonth, selectedDay] = selectedDate.split('-').map(Number);
+  const selectedDateObj = new Date(selectedYear, selectedMonth - 1, selectedDay);
+  const isToday = today.toDateString() === selectedDateObj.toDateString();
+  const dayOfWeek = selectedDateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const formattedDate = selectedDateObj.toLocaleDateString('pt-BR');
+  
+  // Diferentes cenários e mensagens contextuais
+  let message = '';
+  let iconClass = 'no-slots';
+  let suggestionMessage = '';
+  
+  if (availability.source === 'Fallback Mode') {
+    // Erro de integração com Make.com
+    message = `
+      <div class="${iconClass} fallback-error">
+        <div class="message-icon">🔧</div>
+        <div class="message-title">Sistema em Manutenção</div>
+        <div class="message-content">
+          Estamos verificando a disponibilidade de horários.<br>
+          Por favor, tente novamente em alguns minutos.
+        </div>
+        <div class="message-action">
+          <button onclick="generateTimeSlots()" class="retry-availability-btn">
+            🔄 Tentar Novamente
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (availability.bookedSlots && availability.bookedSlots.length > 0) {
+    // Todos os horários estão ocupados
+    const totalSlots = 5; // horários padrão do sistema
+    const occupiedSlots = availability.bookedSlots.length;
+    
+    if (isToday) {
+      message = `
+        <div class="${iconClass} fully-booked-today">
+          <div class="message-icon">😊</div>
+          <div class="message-title">Hoje está bem movimentado!</div>
+          <div class="message-content">
+            Todos os ${occupiedSlots} horários de hoje (${formattedDate}) já foram agendados.<br>
+            Que tal escolher outro dia?
+          </div>
+          ${generateNextAvailableDaysSuggestion()}
+        </div>
+      `;
+    } else {
+      message = `
+        <div class="${iconClass} fully-booked">
+          <div class="message-icon">📅</div>
+          <div class="message-title">Este ${dayOfWeek} está lotado!</div>
+          <div class="message-content">
+            Todos os horários de ${formattedDate} já foram reservados.<br>
+            Escolha outra data disponível para seu agendamento.
+          </div>
+          ${generateNextAvailableDaysSuggestion()}
+        </div>
+      `;
+    }
+  } else if (isToday) {
+    // Para hoje, mas horários já passaram
+    const currentHour = today.getHours();
+    if (currentHour >= 22) {
+      message = `
+        <div class="${iconClass} too-late-today">
+          <div class="message-icon">🌙</div>
+          <div class="message-title">Ops! Já está tarde hoje</div>
+          <div class="message-content">
+            Os atendimentos de hoje já encerraram.<br>
+            Que tal agendar para amanhã ou outro dia?
+          </div>
+          ${generateNextAvailableDaysSuggestion()}
+        </div>
+      `;
+    } else {
+      message = `
+        <div class="${iconClass} no-more-today">
+          <div class="message-icon">⏰</div>
+          <div class="message-title">Horários de hoje não disponíveis</div>
+          <div class="message-content">
+            Os horários restantes de hoje já passaram ou estão ocupados.<br>
+            Escolha outro dia para seu agendamento.
+          </div>
+          ${generateNextAvailableDaysSuggestion()}
+        </div>
+      `;
+    }
+  } else {
+    // Data no futuro sem disponibilidade
+    message = `
+      <div class="${iconClass} no-availability">
+        <div class="message-icon">📋</div>
+        <div class="message-title">Sem horários disponíveis</div>
+        <div class="message-content">
+          Não há atendimentos disponíveis para ${dayOfWeek}, ${formattedDate}.<br>
+          Escolha outra data que esteja disponível.
+        </div>
+        ${generateNextAvailableDaysSuggestion()}
+      </div>
+    `;
+  }
+  
+  return message;
+}
+
+// Função para sugerir próximos dias disponíveis
+function generateNextAvailableDaysSuggestion() {
+  return `
+    <div class="suggestion-section">
+      <div class="suggestion-title">💡 Sugestão:</div>
+      <div class="suggestion-content">
+        <button onclick="suggestNextAvailableDays()" class="suggest-days-btn">
+          Ver próximos dias disponíveis
+        </button>
+        <button onclick="generateAvailableDates()" class="refresh-dates-btn">
+          🔄 Atualizar calendário
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// Função para sugerir próximos dias disponíveis
+async function suggestNextAvailableDays() {
+  const today = new Date();
+  const nextWeek = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+  
+  const startDate = today.toISOString().split('T')[0];
+  const endDate = nextWeek.toISOString().split('T')[0];
+  
+  try {
+    const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`);
+    const data = await response.json();
+    
+    if (data.success && data.agendarAvailability) {
+      const availableDays = Object.keys(data.agendarAvailability)
+        .filter(dateKey => {
+          const dayData = data.agendarAvailability[dateKey];
+          const [year, month, day] = dateKey.split('-').map(Number);
+          const date = new Date(year, month - 1, day);
+          const dayOfWeek = date.getDay();
+          return dayData.hasAvailability && dayOfWeek >= 1 && dayOfWeek <= 6;
+        })
+        .slice(0, 3); // Mostrar apenas os próximos 3 dias
+      
+      if (availableDays.length > 0) {
+        let suggestionHTML = `
+          <div class="available-days-suggestion">
+            <h4>📅 Próximos dias disponíveis:</h4>
+            <div class="suggested-days">
+        `;
+        
+        availableDays.forEach(dateKey => {
+          const [year, month, day] = dateKey.split('-').map(Number);
+          const date = new Date(year, month - 1, day);
+          const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+          const dayNum = date.getDate();
+          const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
+          
+          suggestionHTML += `
+            <button class="suggested-day-btn" onclick="selectSuggestedDate('${dateKey}')">
+              <span class="suggested-day-num">${dayNum}</span>
+              <span class="suggested-day-month">${monthName}</span>
+              <span class="suggested-day-name">${dayName}</span>
+            </button>
+          `;
+        });
+        
+        suggestionHTML += `
+            </div>
+          </div>
+        `;
+        
+        // Mostrar sugestão em modal ou área específica
+        showSuggestionModal(suggestionHTML);
+      } else {
+        showResult('info', 'Não há dias disponíveis na próxima semana. Tente selecionar uma data mais distante.');
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar sugestões:', error);
+    showResult('error', 'Erro ao buscar próximos dias disponíveis.');
+  }
+}
+
+// Função para mostrar modal de sugestões
+function showSuggestionModal(content) {
+  // Remover modal anterior se existir
+  const existingModal = document.querySelector('.suggestion-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  const modal = document.createElement('div');
+  modal.className = 'suggestion-modal';
+  modal.innerHTML = `
+    <div class="suggestion-modal-content">
+      <div class="suggestion-modal-header">
+        <span class="suggestion-modal-title">Dias Disponíveis</span>
+        <button class="suggestion-modal-close" onclick="closeSuggestionModal()">×</button>
+      </div>
+      <div class="suggestion-modal-body">
+        ${content}
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Auto fechar após 10 segundos
+  setTimeout(() => {
+    closeSuggestionModal();
+  }, 10000);
+}
+
+// Função para fechar modal de sugestões
+function closeSuggestionModal() {
+  const modal = document.querySelector('.suggestion-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Função para selecionar data sugerida
+function selectSuggestedDate(dateKey) {
+  // Fechar modal
+  closeSuggestionModal();
+  
+  // Selecionar a data no calendário
+  const dateSlots = document.querySelectorAll('.date-slot');
+  dateSlots.forEach(slot => {
+    slot.classList.remove('selected');
+    if (slot.dataset.date === dateKey) {
+      slot.classList.add('selected');
+      slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+  
+  // Atualizar campo hidden
+  document.getElementById('date').value = dateKey;
+  
+  // Gerar horários para a data selecionada
+  generateTimeSlots();
+  
+  // Mostrar mensagem de sucesso
+  showResult('success', `Data ${dateKey} selecionada! Escolha um horário disponível.`);
+}
+
 // Função para gerar os dias disponíveis baseado no availability do Make
 async function generateAvailableDates() {
   const dateSelector = document.querySelector('.date-selector');
@@ -422,11 +672,8 @@ async function generateTimeSlots() {
     
     // Verificar se temos horários disponíveis
     if (!availability.availableSlots || availability.availableSlots.length === 0) {
-      if (availability.source === 'Fallback Mode') {
-        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Usando horários padrão. Verifique a integração com o Make.</div>';
-      } else {
-        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
-      }
+      const friendlyMessage = generateFriendlyNoSlotsMessage(availability, selectedDate);
+      timeSlotsContainer.innerHTML = friendlyMessage;
       return;
     }
     
@@ -489,13 +736,10 @@ async function generateTimeSlots() {
       });
     }
     
-    // Se não há horários disponíveis
+    // Se não há horários disponíveis (verificação duplicada para garantir)
     if (availability.availableSlots.length === 0) {
-      if (availability.source === 'Fallback Mode') {
-        timeSlotsContainer.innerHTML = '<div class="no-slots">⚠️ Não foi possível verificar disponibilidade. Tente novamente ou entre em contato.</div>';
-      } else {
-        timeSlotsContainer.innerHTML = '<div class="no-slots">Nenhum horário disponível para esta data. Tente outra data.</div>';
-      }
+      const friendlyMessage = generateFriendlyNoSlotsMessage(availability, selectedDate);
+      timeSlotsContainer.innerHTML = friendlyMessage;
     }
     
   } catch (error) {

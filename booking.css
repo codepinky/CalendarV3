@@ -938,6 +938,324 @@ h1 {
   margin-top: 2px;
 }
 
+/* Estilos para mensagens amigáveis de horários indisponíveis */
+.no-slots {
+  position: relative;
+  overflow: visible;
+}
+
+/* Estrutura das mensagens contextuais */
+.message-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+  line-height: 1;
+}
+
+.message-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.message-content {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message-action {
+  margin-top: 16px;
+}
+
+/* Botões de ação nas mensagens */
+.retry-availability-btn,
+.suggest-days-btn,
+.refresh-dates-btn {
+  background: linear-gradient(135deg, #63b3ed, #9f7aea);
+  border: 0;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-size: 13px;
+  margin: 5px;
+  display: inline-block;
+}
+
+.retry-availability-btn:hover,
+.suggest-days-btn:hover,
+.refresh-dates-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 179, 237, 0.4);
+}
+
+/* Diferentes tipos de mensagens */
+.fallback-error {
+  background: linear-gradient(135deg, 
+    rgba(246, 173, 85, 0.15) 0%, 
+    rgba(246, 173, 85, 0.08) 100%);
+  border-color: rgba(246, 173, 85, 0.5);
+}
+
+.fully-booked-today,
+.fully-booked {
+  background: linear-gradient(135deg, 
+    rgba(159, 122, 234, 0.15) 0%, 
+    rgba(246, 135, 179, 0.15) 100%);
+  border-color: rgba(159, 122, 234, 0.5);
+}
+
+.too-late-today {
+  background: linear-gradient(135deg, 
+    rgba(104, 117, 191, 0.15) 0%, 
+    rgba(104, 117, 191, 0.08) 100%);
+  border-color: rgba(104, 117, 191, 0.5);
+}
+
+.no-more-today {
+  background: linear-gradient(135deg, 
+    rgba(247, 147, 49, 0.15) 0%, 
+    rgba(247, 147, 49, 0.08) 100%);
+  border-color: rgba(247, 147, 49, 0.5);
+}
+
+.no-availability {
+  background: linear-gradient(135deg, 
+    rgba(160, 174, 192, 0.15) 0%, 
+    rgba(160, 174, 192, 0.08) 100%);
+  border-color: rgba(160, 174, 192, 0.5);
+}
+
+/* Seção de sugestões */
+.suggestion-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.suggestion-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.suggestion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Modal de sugestões */
+.suggestion-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease;
+}
+
+.suggestion-modal-content {
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.85) 0%, 
+    rgba(20, 20, 30, 0.90) 50%, 
+    rgba(0, 0, 0, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 0;
+  max-width: 90%;
+  max-height: 80%;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+.suggestion-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #9f7aea, #f687b3);
+}
+
+.suggestion-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-modal-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.suggestion-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.suggestion-modal-body {
+  padding: 24px;
+  color: white;
+}
+
+.available-days-suggestion h4 {
+  margin-bottom: 16px;
+  text-align: center;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.suggested-days {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.suggested-day-btn {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 80px;
+  backdrop-filter: blur(10px);
+}
+
+.suggested-day-btn:hover {
+  background: linear-gradient(135deg, 
+    rgba(159, 122, 234, 0.3) 0%, 
+    rgba(246, 135, 179, 0.3) 100%);
+  border-color: #9f7aea;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(159, 122, 234, 0.4);
+}
+
+.suggested-day-num {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.suggested-day-month {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.suggested-day-name {
+  font-size: 10px;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+/* Animações */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsividade para mensagens amigáveis */
+@media (max-width: 767px) {
+  .message-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  
+  .message-title {
+    font-size: 16px;
+  }
+  
+  .message-content {
+    font-size: 13px;
+  }
+  
+  .suggestion-content {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .retry-availability-btn,
+  .suggest-days-btn,
+  .refresh-dates-btn {
+    width: 100%;
+    margin: 3px 0;
+  }
+  
+  .suggestion-modal-content {
+    margin: 20px;
+    max-width: calc(100% - 40px);
+  }
+  
+  .suggested-days {
+    gap: 8px;
+  }
+  
+  .suggested-day-btn {
+    min-width: 70px;
+    padding: 12px 8px;
+  }
+}
+
+@media (min-width: 768px) {
+  .suggestion-content {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .retry-availability-btn,
+  .suggest-days-btn,
+  .refresh-dates-btn {
+    width: auto;
+  }
+}
+
 /* Responsividade - Mobile First */
 @media (max-width: 767px) {
   body {
