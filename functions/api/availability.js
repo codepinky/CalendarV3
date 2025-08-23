@@ -502,7 +502,7 @@ function processAgendarMakeData(makeData, startDate, endDate) {
     if (eventsArray.length > 0) {
       const agendarAvailability = {};
       
-            eventsArray.forEach((event, index) => {
+      eventsArray.forEach((event, index) => {
         console.log(`📅 [DEBUG] Processando evento ${index + 1}:`, event);
         
         if (event.start) {
@@ -563,17 +563,22 @@ function processAgendarMakeData(makeData, startDate, endDate) {
         }
       });
       
-      // Processar todos os dias do período solicitado
+      // CORREÇÃO: Processar todos os dias do período solicitado e marcar como disponível se não tiver eventos
       const start = new Date(startDate + 'T00:00:00.000Z');
       const end = new Date(endDate + 'T00:00:00.000Z');
       
       console.log(`📅 [DEBUG] Processando período: ${startDate} até ${endDate}`);
       console.log(`📅 [DEBUG] Data início: ${start.toISOString()}, Data fim: ${end.toISOString()}`);
       
+      // CORREÇÃO: Adicionar contador para debug
+      let totalDaysProcessed = 0;
+      let availableDaysCount = 0;
+      
       for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
+        totalDaysProcessed++;
         
-        console.log(`📅 [DEBUG] Verificando dia: ${dateStr}`);
+        console.log(`📅 [DEBUG] Verificando dia ${totalDaysProcessed}: ${dateStr}`);
         
         if (!agendarAvailability[dateStr]) {
           console.log(`📅 [DEBUG] Dia ${dateStr} não tem eventos - marcando como INDISPONÍVEL`);
@@ -587,14 +592,25 @@ function processAgendarMakeData(makeData, startDate, endDate) {
             message: 'Sem eventos "Atender" para este dia'
           };
         } else {
-          console.log(`📅 [DEBUG] Dia ${dateStr} já processado com eventos`);
+          console.log(`📅 [DEBUG] Dia ${dateStr} já processado com eventos - hasAvailability: ${agendarAvailability[dateStr].hasAvailability}`);
+          if (agendarAvailability[dateStr].hasAvailability) {
+            availableDaysCount++;
+          }
         }
       }
+      
+      console.log(`📊 [DEBUG] RESUMO FINAL:`);
+      console.log(`   - Total de dias processados: ${totalDaysProcessed}`);
+      console.log(`   - Dias com eventos "Atender": ${eventsArray.length}`);
+      console.log(`   - Dias marcados como disponíveis: ${availableDaysCount}`);
+      console.log(`   - Total de chaves no agendarAvailability: ${Object.keys(agendarAvailability).length}`);
+      console.log(`   - Chaves disponíveis:`, Object.keys(agendarAvailability).filter(key => agendarAvailability[key].hasAvailability));
       
       return agendarAvailability;
     }
     
     // Fallback para dados não reconhecidos
+    console.log('⚠️ [DEBUG] Nenhum evento "Atender" encontrado, retornando disponibilidade vazia');
     return generateEmptyWeeklyAvailability(startDate, endDate);
     
   } catch (error) {

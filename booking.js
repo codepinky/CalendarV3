@@ -527,7 +527,7 @@ function generateDateSlotsFromAvailability(availabilityData) {
   console.log('📅 DEBUG - Ano atual:', currentYear);
   console.log('📅 Gerando slots baseado em availability:', availabilityData);
   
-  // Converter object para array e ordenar por data
+  // Converter object para array e ordenar por data CRONOLOGICAMENTE
   const availableDays = Object.keys(availabilityData)
     .filter(dateKey => {
       const dayData = availabilityData[dateKey];
@@ -554,16 +554,17 @@ function generateDateSlotsFromAvailability(availabilityData) {
         console.log(`  - MOTIVO: hasAvailability=${dayData.hasAvailability} - Se false, não aparece!`);
       }
       
-      // Filtros: só dias úteis (seg-sab), do mês atual, que tenham availability
-      const isDayOfWeekValid = dayOfWeek >= 1 && dayOfWeek <= 6; // Segunda a sábado
+      // CORREÇÃO: Remover filtro de dias úteis para mostrar TODOS os dias disponíveis
+      // const isDayOfWeekValid = dayOfWeek >= 1 && dayOfWeek <= 6; // Segunda a sábado
       const isCurrentMonth = date.getMonth() === currentMonth;
       const isCurrentYear = date.getFullYear() === currentYear;
       const hasAvailability = dayData.hasAvailability === true;
       
-      const passesFilter = isDayOfWeekValid && isCurrentMonth && isCurrentYear && hasAvailability;
+      // CORREÇÃO: Mostrar todos os dias com availability, independente do dia da semana
+      const passesFilter = isCurrentMonth && isCurrentYear && hasAvailability;
       
       console.log(`  - Passou no filtro: ${passesFilter}`);
-      console.log(`    - Dia útil válido: ${isDayOfWeekValid}`);
+      console.log(`    - Dia útil válido: ${true}`); // Sempre true agora
       console.log(`    - Mês atual: ${isCurrentMonth}`);
       console.log(`    - Ano atual: ${isCurrentYear}`);
       console.log(`    - Tem availability: ${hasAvailability}`);
@@ -571,9 +572,14 @@ function generateDateSlotsFromAvailability(availabilityData) {
       
       return passesFilter;
     })
-    .sort(); // Ordenar cronologicamente
+    .sort((a, b) => {
+      // CORREÇÃO: Ordenar cronologicamente por data
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateA - dateB;
+    });
   
-  console.log('📅 Dias disponíveis filtrados:', availableDays);
+  console.log('📅 Dias disponíveis filtrados e ordenados:', availableDays);
   
   if (availableDays.length === 0) {
     showAvailabilityError('Nenhum dia disponível encontrado para este mês.');
