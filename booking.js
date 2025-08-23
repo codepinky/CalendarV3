@@ -769,13 +769,9 @@ Motivo: ${data.reason || 'Agendamento via site'}`,
     // A lógica de atualização do cache foi removida, pois não há mais variáveis de cache
     // A geração de horários agora é feita diretamente com a chamada da API
     
-    // Selecionar primeira data novamente
-    const firstDateSlot = document.querySelector('.date-slot');
-    if (firstDateSlot) {
-      firstDateSlot.classList.add('selected');
-      // NÃO sobrescrever o campo date aqui - deixar como está
-      generateTimeSlots();
-    }
+    // NÃO selecionar automaticamente nenhuma data após agendamento
+    // Deixar o usuário escolher uma nova data se quiser agendar novamente
+    console.log('✅ Agendamento concluído. Nenhuma data selecionada automaticamente.');
     
   } catch (error) {
     console.error('Erro no agendamento:', error);
