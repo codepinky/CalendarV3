@@ -442,9 +442,18 @@ function processAgendarMakeData(makeData, startDate, endDate) {
         console.log(`📋 [DEBUG] Evento: ${eventName} - É "Atender"?`, isAtender);
         return isAtender;
       });
+    } else if (makeData && makeData.array && Array.isArray(makeData.array)) {
+      console.log('📋 [DEBUG] Detectado formato Make.com: {"array": [...]}');
+      // Formato Make.com: {"array": [{"summary": "Atender", "start": "..."}]}
+      eventsArray = makeData.array.filter(event => {
+        const eventName = typeof event.summary === 'string' ? event.summary.replace(/^"+|"+$/g, '') : event.summary;
+        const isAtender = eventName === 'Atender';
+        console.log(`📋 [DEBUG] Evento: ${eventName} - É "Atender"?`, isAtender);
+        return isAtender;
+      });
     } else if (Array.isArray(makeData)) {
       console.log('📋 [DEBUG] Detectado formato array direto: [{"summary": "..."}]');
-      // Formato novo: array direto [{"summary": "Atender", "start": "..."}]
+      // Formato array direto: [{"summary": "Atender", "start": "..."}]
       eventsArray = makeData.filter(event => {
         const eventName = typeof event.summary === 'string' ? event.summary.replace(/^"+|"+$/g, '') : event.summary;
         const isAtender = eventName === 'Atender';
@@ -452,7 +461,7 @@ function processAgendarMakeData(makeData, startDate, endDate) {
         return isAtender;
       });
     } else {
-      console.log('❌ [DEBUG] Formato não reconhecido - nem objeto com events nem array');
+      console.log('❌ [DEBUG] Formato não reconhecido - nem objeto com events, nem array, nem objeto com array');
     }
     
     console.log(`🎯 [DEBUG] Eventos "Atender" encontrados: ${eventsArray.length}`, eventsArray);
