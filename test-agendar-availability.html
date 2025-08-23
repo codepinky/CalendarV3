@@ -200,8 +200,17 @@
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
             
-            document.getElementById('startDate').value = startOfWeek.toISOString().split('T')[0];
-            document.getElementById('endDate').value = endOfWeek.toISOString().split('T')[0];
+            const startDateStr = startOfWeek.toISOString().split('T')[0];
+            const endDateStr = endOfWeek.toISOString().split('T')[0];
+            
+            console.log('📅 [FRONTEND] Semana atual calculada:', {
+                hoje: today.toISOString().split('T')[0],
+                inicioSemana: startDateStr,
+                fimSemana: endDateStr
+            });
+            
+            document.getElementById('startDate').value = startDateStr;
+            document.getElementById('endDate').value = endDateStr;
         }
         
         function setNextWeek() {
@@ -219,6 +228,11 @@
         async function checkAvailability() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
+            
+            console.log('📅 [FRONTEND] Datas selecionadas:', {
+                dataInicio: startDate,
+                dataFim: endDate
+            });
             
             if (!startDate || !endDate) {
                 alert('Por favor, selecione as datas de início e fim da semana.');

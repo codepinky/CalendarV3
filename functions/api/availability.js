@@ -479,6 +479,14 @@ function processAgendarMakeData(makeData, startDate, endDate) {
             
             console.log(`📅 [DEBUG] Data do evento: ${event.start} -> ${dateKey}`);
             
+            // VERIFICAR se o evento está dentro do período solicitado
+            if (dateKey < startDate || dateKey > endDate) {
+              console.log(`⚠️ [DEBUG] EVENTO FORA DO PERÍODO! ${dateKey} não está entre ${startDate} e ${endDate} - IGNORANDO`);
+              return; // Pular este evento
+            }
+            
+            console.log(`✅ [DEBUG] Evento ${dateKey} está dentro do período solicitado`);
+            
             // Suporte para ambos os formatos: name ou summary
             const cleanEventName = event.name 
               ? (typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name)
