@@ -141,6 +141,13 @@ export async function onRequestGet(context) {
       // URL específica para verificar eventos "Atender"
       const makeUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}&eventName=Atender`;
       
+      console.log('🔍 [DEBUG] Enviando requisição para Make.com:', {
+        url: makeUrl,
+        startDate,
+        endDate,
+        eventName: 'Atender'
+      });
+      
       try {
         const availabilityResponse = await fetch(makeUrl, {
           method: 'GET',
@@ -149,9 +156,19 @@ export async function onRequestGet(context) {
           }
         });
 
+        console.log('📡 [DEBUG] Resposta do Make.com - Status:', availabilityResponse.status);
+
         if (availabilityResponse.ok) {
           const makeData = await availabilityResponse.json().catch(() => ({}));
+          
+          console.log('📦 [DEBUG] JSON recebido do Make.com:', JSON.stringify(makeData, null, 2));
+          console.log('📦 [DEBUG] Tipo do JSON:', Array.isArray(makeData) ? 'Array direto' : 'Objeto', 
+                     '- Quantidade de itens:', Array.isArray(makeData) ? makeData.length : 
+                     (makeData.events ? makeData.events.length : 'N/A'));
+          
           const agendarAvailability = processAgendarMakeData(makeData, startDate, endDate);
+          
+          console.log('✅ [DEBUG] Disponibilidade processada:', JSON.stringify(agendarAvailability, null, 2));
           
           return json({
             success: true,
@@ -408,33 +425,50 @@ function processMakeData(makeData, date) {
 
 function processAgendarMakeData(makeData, startDate, endDate) {
   try {
+    console.log('🔄 [DEBUG] Iniciando processamento dos dados do Make.com');
+    console.log('🔄 [DEBUG] Dados recebidos:', JSON.stringify(makeData, null, 2));
+    
     // Suporte para dois formatos:
     // 1. {"events": [...]} (formato original)
     // 2. [...] (array direto com summary)
     let eventsArray = [];
     
     if (makeData && makeData.events && Array.isArray(makeData.events)) {
+      console.log('📋 [DEBUG] Detectado formato original: {"events": [...]}');
       // Formato original: {"events": [...]}
       eventsArray = makeData.events.filter(event => {
         const eventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
-        return eventName === 'Atender';
+        const isAtender = eventName === 'Atender';
+        console.log(`📋 [DEBUG] Evento: ${eventName} - É "Atender"?`, isAtender);
+        return isAtender;
       });
     } else if (Array.isArray(makeData)) {
+      console.log('📋 [DEBUG] Detectado formato array direto: [{"summary": "..."}]');
       // Formato novo: array direto [{"summary": "Atender", "start": "..."}]
       eventsArray = makeData.filter(event => {
         const eventName = typeof event.summary === 'string' ? event.summary.replace(/^"+|"+$/g, '') : event.summary;
-        return eventName === 'Atender';
+        const isAtender = eventName === 'Atender';
+        console.log(`📋 [DEBUG] Evento: ${eventName} - É "Atender"?`, isAtender);
+        return isAtender;
       });
+    } else {
+      console.log('❌ [DEBUG] Formato não reconhecido - nem objeto com events nem array');
     }
+    
+    console.log(`🎯 [DEBUG] Eventos "Atender" encontrados: ${eventsArray.length}`, eventsArray);
     
     if (eventsArray.length > 0) {
       const agendarAvailability = {};
       
-            eventsArray.forEach(event => {
+            eventsArray.forEach((event, index) => {
+        console.log(`📅 [DEBUG] Processando evento ${index + 1}:`, event);
+        
         if (event.start) {
           try {
             const eventDate = new Date(event.start);
             const dateKey = eventDate.toISOString().split('T')[0];
+            
+            console.log(`📅 [DEBUG] Data do evento: ${event.start} -> ${dateKey}`);
             
             // Suporte para ambos os formatos: name ou summary
             const cleanEventName = event.name 
@@ -443,11 +477,15 @@ function processAgendarMakeData(makeData, startDate, endDate) {
             
             const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
             
+            console.log(`📅 [DEBUG] Nome limpo: "${cleanEventName}", Status: "${cleanEventStatus || 'sem status'}"`);
+            
             // Se não tem status, assume como confirmado (para formato array direto)
             const isAvailable = !event.status || 
                               cleanEventStatus === 'confirmed' || 
                               cleanEventStatus === 'Atender' || 
                               cleanEventStatus === 'active';
+            
+            console.log(`📅 [DEBUG] Dia ${dateKey} será marcado como:`, isAvailable ? 'DISPONÍVEL' : 'INDISPONÍVEL');
             
             agendarAvailability[dateKey] = {
               date: dateKey,
