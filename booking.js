@@ -256,7 +256,8 @@ async function generateAvailableDates() {
     const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
     const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
     
-    console.log('📅 Buscando availability do mês:', startOfMonth, 'a', endOfMonth);
+    console.log('📅 DEBUG - Consultando API para período:', startOfMonth, 'a', endOfMonth);
+    console.log('📅 DEBUG - Ano/Mês da consulta:', currentYear, '/', currentMonth + 1);
     
     const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startOfMonth}&endDate=${endOfMonth}`);
     const data = await response.json();
@@ -292,6 +293,9 @@ function generateDateSlotsFromAvailability(availabilityData) {
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   
+  console.log('📅 DEBUG - Data atual:', today.toISOString().split('T')[0]);
+  console.log('📅 DEBUG - Mês atual:', currentMonth, '(0=Janeiro, 7=Agosto, 11=Dezembro)');
+  console.log('📅 DEBUG - Ano atual:', currentYear);
   console.log('📅 Gerando slots baseado em availability:', availabilityData);
   
   // Converter object para array e ordenar por data
@@ -300,12 +304,40 @@ function generateDateSlotsFromAvailability(availabilityData) {
       const dayData = availabilityData[dateKey];
       const date = new Date(dateKey);
       const dayOfWeek = date.getDay(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
+      const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      
+      // Debug detalhado
+      console.log(`🔍 DEBUG - Analisando ${dateKey}:`);
+      console.log(`  - Dia da semana: ${dayNames[dayOfWeek]} (${dayOfWeek})`);
+      console.log(`  - Mês: ${date.getMonth()} (atual: ${currentMonth})`);
+      console.log(`  - Ano: ${date.getFullYear()} (atual: ${currentYear})`);
+      console.log(`  - hasAvailability: ${dayData.hasAvailability}`);
+      console.log(`  - eventName: ${dayData.eventName}`);
+      console.log(`  - eventStatus: ${dayData.eventStatus}`);
+      
+      // Debug específico para dia 25
+      if (dateKey.includes('25')) {
+        console.log(`🎯 ATENÇÃO - DIA 25 DETECTADO: ${dateKey}`);
+        console.log(`  - Data completa: ${date.toString()}`);
+        console.log(`  - getDay(): ${date.getDay()} (0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab)`);
+      }
       
       // Filtros: só dias úteis (seg-sab), do mês atual, que tenham availability
-      return dayOfWeek >= 1 && dayOfWeek <= 6 && // Segunda a sábado
-             date.getMonth() === currentMonth &&
-             date.getFullYear() === currentYear &&
-             dayData.hasAvailability === true;
+      const isDayOfWeekValid = dayOfWeek >= 1 && dayOfWeek <= 6; // Segunda a sábado
+      const isCurrentMonth = date.getMonth() === currentMonth;
+      const isCurrentYear = date.getFullYear() === currentYear;
+      const hasAvailability = dayData.hasAvailability === true;
+      
+      const passesFilter = isDayOfWeekValid && isCurrentMonth && isCurrentYear && hasAvailability;
+      
+      console.log(`  - Passou no filtro: ${passesFilter}`);
+      console.log(`    - Dia útil válido: ${isDayOfWeekValid}`);
+      console.log(`    - Mês atual: ${isCurrentMonth}`);
+      console.log(`    - Ano atual: ${isCurrentYear}`);
+      console.log(`    - Tem availability: ${hasAvailability}`);
+      console.log('---');
+      
+      return passesFilter;
     })
     .sort(); // Ordenar cronologicamente
   
