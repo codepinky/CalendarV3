@@ -213,10 +213,10 @@
                                         // Verificar se contém "Atender" E "confirmed"
                                         const hasAtender = concatenatedValue.includes('Atender');
                                         const hasConfirmed = concatenatedValue.includes('confirmed');
-                                        const isAvailable = hasAtender && hasConfirmed;
+                                        const isAvailable = hasAtender && hasConfirmed; // ✅ AMBOS necessários: Atender + confirmed
                                         
                                         log(`✅ Data extraída: ${dateKey}, Atender: ${hasAtender}, Confirmed: ${hasConfirmed}`);
-                                        log(`✅ Disponibilidade: ${isAvailable} (precisa de Atender + confirmed)`);
+                                        log(`✅ Disponibilidade: ${isAvailable} (AMBOS necessários: Atender + confirmed)`);
                                         
                                         frontendFormat.weeklyAvailability[dateKey] = {
                                             date: dateKey,
@@ -225,12 +225,12 @@
                                             eventStatus: hasConfirmed ? 'confirmed' : 'Agendado',
                                             availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                                             bookedSlots: [],
-                                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam requisitos)',
+                                            message: isAvailable ? 'Dia disponível para agendamento (status confirmed)' : 'Dia não disponível (status não confirmed)',
                                             rawValue: concatenatedValue,
                                             requirements: {
                                                 hasAtender: hasAtender,
                                                 hasConfirmed: hasConfirmed,
-                                                bothRequired: isAvailable
+                                                availabilityBasedOn: 'confirmed'
                                             }
                                         };
                                         
@@ -380,13 +380,13 @@
                          const bgColor = day.hasAvailability ? '#e8f5e8' : '#ffe8e8';
                          const statusIcon = day.hasAvailability ? '✅' : '❌';
                          
-                         // Mostrar requisitos se disponível
-                         const requirementsHtml = day.requirements ? `
-                             <strong>Requisitos:</strong><br>
-                             • Atender: ${day.requirements.hasAtender ? '✅' : '❌'}<br>
-                             • Confirmed: ${day.requirements.hasConfirmed ? '✅' : '❌'}<br>
-                             • Ambos necessários: ${day.requirements.bothRequired ? '✅' : '❌'}
-                         ` : '';
+                                                   // Mostrar requisitos se disponível
+                          const requirementsHtml = day.requirements ? `
+                              <strong>Requisitos:</strong><br>
+                              • Atender: ${day.requirements.hasAtender ? '✅' : '❌'}<br>
+                              • Confirmed: ${day.requirements.hasConfirmed ? '✅' : '❌'}<br>
+                              • Disponibilidade baseada em: ${day.requirements.availabilityBasedOn || 'N/A'}
+                          ` : '';
                          
                          return `
                              <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: ${bgColor};">
@@ -517,7 +517,7 @@
                                                        // Verificar se contém "Atender" E "confirmed"
                           const hasAtender = concatenatedValue.includes('Atender');
                           const hasConfirmed = concatenatedValue.includes('confirmed');
-                          const isAvailable = hasAtender && hasConfirmed;
+                          const isAvailable = hasAtender && hasConfirmed; // ✅ AMBOS necessários: Atender + confirmed
                           
                           weeklyAvailability[dateKey] = {
                             date: dateKey,
@@ -526,12 +526,12 @@
                             eventStatus: hasConfirmed ? 'confirmed' : 'Agendado',
                             availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                             bookedSlots: [],
-                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam requisitos)',
+                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam Atender ou confirmed)',
                             rawValue: concatenatedValue,
                             requirements: {
                               hasAtender: hasAtender,
                               hasConfirmed: hasConfirmed,
-                              bothRequired: isAvailable
+                              availabilityBasedOn: 'Ambos: Atender + confirmed'
                             }
                           };
                              
