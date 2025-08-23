@@ -302,7 +302,9 @@ function generateDateSlotsFromAvailability(availabilityData) {
   const availableDays = Object.keys(availabilityData)
     .filter(dateKey => {
       const dayData = availabilityData[dateKey];
-      const date = new Date(dateKey);
+      // CORREÇÃO: Usar UTC para evitar problemas de timezone
+      const [year, month, day] = dateKey.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // month-1 porque Date usa 0-11
       const dayOfWeek = date.getDay(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
       const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
       
@@ -320,6 +322,7 @@ function generateDateSlotsFromAvailability(availabilityData) {
         console.log(`🎯 ATENÇÃO - DIA 25 DETECTADO: ${dateKey}`);
         console.log(`  - Data completa: ${date.toString()}`);
         console.log(`  - getDay(): ${date.getDay()} (0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sab)`);
+        console.log(`  - MOTIVO: hasAvailability=${dayData.hasAvailability} - Se false, não aparece!`);
       }
       
       // Filtros: só dias úteis (seg-sab), do mês atual, que tenham availability
@@ -351,10 +354,12 @@ function generateDateSlotsFromAvailability(availabilityData) {
   // Gerar um slot para cada dia disponível
   availableDays.forEach(dateKey => {
     const dayData = availabilityData[dateKey];
-    const date = new Date(dateKey);
+    // CORREÇÃO: Usar a mesma lógica de criação de data
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const day = date.getDate();
-    const month = date.toLocaleDateString('pt-BR', { month: 'short' });
+    const dayNum = date.getDate();
+    const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
     
     console.log(`✅ Criando slot para: ${dateKey} (${dayData.eventName})`);
     
@@ -364,8 +369,8 @@ function generateDateSlotsFromAvailability(availabilityData) {
     dateSlot.title = dayData.message || 'Dia disponível para agendamento';
     
     dateSlot.innerHTML = `
-      <span class="date-day">${day}</span>
-      <span class="date-month">${month}</span>
+      <span class="date-day">${dayNum}</span>
+      <span class="date-month">${monthName}</span>
       <span class="date-weekday">${dayOfWeek}</span>
       <span class="availability-indicator">Disponível</span>
     `;
