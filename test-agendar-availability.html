@@ -234,15 +234,23 @@
             resultsDiv.style.display = 'block';
             resultsDiv.innerHTML = '<div class="loading">Verificando disponibilidade...</div>';
             
-            try {
-                const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    displayResults(data);
-                } else {
-                    resultsDiv.innerHTML = `<div class="error"><strong>Erro:</strong> ${data.reason}</div>`;
-                }
+                    try {
+            const apiUrl = `/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`;
+            console.log('🔍 [FRONTEND] Fazendo requisição para:', apiUrl);
+            
+            const response = await fetch(apiUrl);
+            console.log('📡 [FRONTEND] Status da resposta:', response.status);
+            
+            const data = await response.json();
+            console.log('📦 [FRONTEND] Dados recebidos:', data);
+            
+            if (data.success) {
+                console.log('✅ [FRONTEND] Processando disponibilidade:', data.agendarAvailability);
+                displayResults(data);
+            } else {
+                console.error('❌ [FRONTEND] Erro na API:', data.reason);
+                resultsDiv.innerHTML = `<div class="error"><strong>Erro:</strong> ${data.reason}</div>`;
+            }
             } catch (error) {
                 resultsDiv.innerHTML = `<div class="error"><strong>Erro de conexão:</strong> ${error.message}</div>`;
             } finally {
