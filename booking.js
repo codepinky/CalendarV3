@@ -140,12 +140,18 @@ function processCalendarEvents(availabilityData, date) {
       const now = new Date();
       const hasPassed = slotTime < now;
       
+      console.log(`🕐 DEBUG TIMEZONE - Slot ${slot}:`);
+      console.log(`   - Horário atual: ${now.toLocaleString('pt-BR')}`);
+      console.log(`   - Horário do slot: ${slotTime.toLocaleString('pt-BR')}`);
+      console.log(`   - Timezone offset: ${now.getTimezoneOffset()} minutos`);
+      console.log(`   - Já passou? ${hasPassed}`);
+      
       if (hasPassed) {
-        console.log(`⏰ Horário ${slot} já passou (${now.toLocaleTimeString()})`);
+        console.log(`⏰ Horário ${slot} já passou (atual: ${now.toLocaleTimeString()})`);
         return false; // Horário já passou
       }
       
-      console.log(`✅ Horário ${slot} ainda não chegou`);
+      console.log(`✅ Horário ${slot} ainda disponível`);
       return true; // Horário ainda não chegou
     });
     
