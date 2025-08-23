@@ -408,38 +408,55 @@ function processMakeData(makeData, date) {
 
 function processAgendarMakeData(makeData, startDate, endDate) {
   try {
+    // Suporte para dois formatos:
+    // 1. {"events": [...]} (formato original)
+    // 2. [...] (array direto com summary)
+    let eventsArray = [];
+    
     if (makeData && makeData.events && Array.isArray(makeData.events)) {
-      const agendarAvailability = {};
-      
-      // Filtrar apenas eventos chamados "Atender"
-      const agendarEvents = makeData.events.filter(event => {
+      // Formato original: {"events": [...]}
+      eventsArray = makeData.events.filter(event => {
         const eventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
         return eventName === 'Atender';
       });
+    } else if (Array.isArray(makeData)) {
+      // Formato novo: array direto [{"summary": "Atender", "start": "..."}]
+      eventsArray = makeData.filter(event => {
+        const eventName = typeof event.summary === 'string' ? event.summary.replace(/^"+|"+$/g, '') : event.summary;
+        return eventName === 'Atender';
+      });
+    }
+    
+    if (eventsArray.length > 0) {
+      const agendarAvailability = {};
       
-      agendarEvents.forEach(event => {
+            eventsArray.forEach(event => {
         if (event.start) {
           try {
             const eventDate = new Date(event.start);
             const dateKey = eventDate.toISOString().split('T')[0];
             
-            const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
+            // Suporte para ambos os formatos: name ou summary
+            const cleanEventName = event.name 
+              ? (typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name)
+              : (typeof event.summary === 'string' ? event.summary.replace(/^"+|"+$/g, '') : event.summary);
+            
             const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
             
-            // Verificar se o evento está ativo/confirmado
-            const isAvailable = cleanEventStatus === 'confirmed' || 
+            // Se não tem status, assume como confirmado (para formato array direto)
+            const isAvailable = !event.status || 
+                              cleanEventStatus === 'confirmed' || 
                               cleanEventStatus === 'Atender' || 
-                              cleanEventStatus === 'active' ||
-                              cleanEventStatus === 'confirmed';
+                              cleanEventStatus === 'active';
             
-                         agendarAvailability[dateKey] = {
-               date: dateKey,
-               hasAvailability: isAvailable,
-               eventName: cleanEventName || 'Atender',
-               eventStatus: cleanEventStatus || 'Ativo',
-               availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
-               bookedSlots: [],
-               message: isAvailable ? 'Dia com evento "Atender" ativo para agendamento' : 'Evento "Atender" não está ativo',
+            agendarAvailability[dateKey] = {
+              date: dateKey,
+              hasAvailability: isAvailable,
+              eventName: cleanEventName || 'Atender',
+              eventStatus: cleanEventStatus || 'Ativo',
+              availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
+              bookedSlots: [],
+              message: isAvailable ? 'Dia com evento "Atender" ativo para agendamento' : 'Evento "Atender" não está ativo',
               eventDetails: {
                 start: event.start,
                 end: event.end,
