@@ -172,6 +172,132 @@
             }
         }
 
+        // 🆕 FUNÇÃO PARA CONVERTER FORMATO DO MAKE PARA FORMATO DO FRONTEND
+        function convertMakeDataToFrontendFormat(makeData, startDate, endDate) {
+            try {
+                log(`🔄 Convertendo dados do Make para formato do frontend...`);
+                
+                // Estrutura que o frontend espera
+                const frontendFormat = {
+                    success: true,
+                    startDate: startDate,
+                    endDate: endDate,
+                    weeklyAvailability: {},
+                    source: 'Make.com + Conversão Local',
+                    lastUpdated: new Date().toISOString()
+                };
+                
+                // Processar dados do Make
+                if (makeData && makeData.events && Array.isArray(makeData.events)) {
+                    log(`✅ Array de eventos detectado: ${makeData.events.length}`);
+                    
+                    // Verificar formato concatenado
+                    const firstItem = makeData.events[0];
+                    if (firstItem && firstItem.value && typeof firstItem.value === 'string') {
+                        log(`🔍 Formato concatenado detectado, processando...`);
+                        
+                        makeData.events.forEach((item, index) => {
+                            if (item && item.value && typeof item.value === 'string') {
+                                const concatenatedValue = item.value;
+                                log(`🔍 Processando item ${index + 1}: ${concatenatedValue}`);
+                                
+                                // Extrair data usando regex
+                                const dateRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g;
+                                const dates = concatenatedValue.match(dateRegex);
+                                
+                                if (dates && dates.length >= 1) {
+                                    try {
+                                        const eventDate = new Date(dates[0]);
+                                        const dateKey = eventDate.toISOString().split('T')[0];
+                                        
+                                        // Verificar se contém "Atender"
+                                        const hasAtender = concatenatedValue.includes('Atender');
+                                        const isAvailable = hasAtender;
+                                        
+                                        log(`✅ Data extraída: ${dateKey}, Atender: ${hasAtender}`);
+                                        
+                                        frontendFormat.weeklyAvailability[dateKey] = {
+                                            date: dateKey,
+                                            hasAvailability: isAvailable,
+                                            eventName: hasAtender ? 'Atender' : 'Evento',
+                                            eventStatus: hasAtender ? 'confirmed' : 'Agendado',
+                                            availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                                            bookedSlots: [],
+                                            message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível',
+                                            rawValue: concatenatedValue
+                                        };
+                                        
+                                    } catch (error) {
+                                        log(`⚠️ Erro ao processar data do item ${index + 1}:`, error);
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        log(`🔍 Formato normal detectado, processando...`);
+                        
+                        makeData.events.forEach((event, index) => {
+                            if (event.start) {
+                                try {
+                                    const eventDate = new Date(event.start);
+                                    const dateKey = eventDate.toISOString().split('T')[0];
+                                    
+                                    const cleanEventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
+                                    const cleanEventStatus = typeof event.status === 'string' ? event.status.replace(/^"+|"+$/g, '') : event.status;
+                                    
+                                    // Se tem evento na data, está disponível
+                                    const isAvailable = true;
+                                    
+                                    frontendFormat.weeklyAvailability[dateKey] = {
+                                        date: dateKey,
+                                        hasAvailability: isAvailable,
+                                        eventName: cleanEventName || 'Evento',
+                                        eventStatus: cleanEventStatus || 'Agendado',
+                                        availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                                        bookedSlots: [],
+                                        message: 'Dia disponível para agendamento'
+                                    };
+                                    
+                                    log(`✅ Dia ${dateKey} processado: Disponibilidade = ${isAvailable}`);
+                                    
+                                } catch (error) {
+                                    log(`⚠️ Erro ao processar evento ${index + 1}:`, error);
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                // Preencher dias sem eventos
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    
+                    if (!frontendFormat.weeklyAvailability[dateStr]) {
+                        frontendFormat.weeklyAvailability[dateStr] = {
+                            date: dateStr,
+                            hasAvailability: false,
+                            eventName: null,
+                            eventStatus: null,
+                            availableSlots: [],
+                            bookedSlots: [],
+                            message: 'Sem eventos para agendamento'
+                        };
+                        log(`📅 Dia ${dateStr}: Sem evento -> Sem disponibilidade`);
+                    }
+                }
+                
+                log(`✅ Conversão concluída: ${Object.keys(frontendFormat.weeklyAvailability).length} dias processados`);
+                return frontendFormat;
+                
+            } catch (error) {
+                log(`💥 Erro na conversão:`, error);
+                return null;
+            }
+        }
+
         // 🆕 FUNÇÃO PARA TESTAR MAKE DIRETAMENTE (QUE FUNCIONA)
         async function testDirectMakeWebhook() {
             const startDate = document.getElementById('startDate').value;
@@ -214,45 +340,56 @@
                     return;
                 }
 
-                // 🆕 AGORA PROCESSAR OS DADOS COMO O BACKEND FARIA
-                log(`🔧 Processando dados do Make com função local...`);
-                const processedData = processWeeklyMakeDataLocal(makeData, startDate, endDate);
+                // 🆕 AGORA CONVERTER PARA O FORMATO QUE O FRONTEND PRECISA
+                log(`🔄 Convertendo dados do Make para formato do frontend...`);
+                const frontendData = convertMakeDataToFrontendFormat(makeData, startDate, endDate);
                 
-                log(`✅ Dados processados com sucesso`);
-                log(`📊 Total de dias processados: ${Object.keys(processedData).length}`);
+                if (!frontendData) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Erro na conversão dos dados';
+                    return;
+                }
+                
+                log(`✅ Dados convertidos com sucesso para formato do frontend`);
+                log(`📊 Total de dias processados: ${Object.keys(frontendData.weeklyAvailability).length}`);
 
-                // Exibir resultado processado
+                // Exibir resultado no formato do frontend
                 resultDiv.className = 'result success';
                 resultDiv.innerHTML = `
-                    <h4>✅ Make funcionando + Dados processados!</h4>
+                    <h4>✅ Make funcionando + Dados convertidos para formato do frontend!</h4>
                     <p><strong>Status:</strong> ${response.status}</p>
-                    <p><strong>Sucesso:</strong> Sim</p>
-                    <p><strong>Data Inicial:</strong> ${startDate}</p>
-                    <p><strong>Data Final:</strong> ${endDate}</p>
-                    <p><strong>Fonte:</strong> Make Direto + Processamento Local</p>
+                    <p><strong>Sucesso:</strong> ${frontendData.success}</p>
+                    <p><strong>Data Inicial:</strong> ${frontendData.startDate}</p>
+                    <p><strong>Data Final:</strong> ${frontendData.endDate}</p>
+                    <p><strong>Fonte:</strong> ${frontendData.source}</p>
+                    <p><strong>Última Atualização:</strong> ${frontendData.lastUpdated}</p>
                     
-                    <h5>📊 RESUMO PROCESSADO:</h5>
-                    <p><strong>Total de dias:</strong> ${Object.keys(processedData).length}</p>
+                    <h5>📊 FORMATO DO FRONTEND (weeklyAvailability):</h5>
+                    <p><strong>Total de dias:</strong> ${Object.keys(frontendData.weeklyAvailability).length}</p>
                     
-                    <h5>📅 DIAS PROCESSADOS:</h5>
-                    ${Object.keys(processedData).map(date => {
-                        const day = processedData[date];
+                    <h5>📅 DIAS PROCESSADOS (formato que o frontend lê):</h5>
+                    ${Object.keys(frontendData.weeklyAvailability).map(date => {
+                        const day = frontendData.weeklyAvailability[date];
                         const bgColor = day.hasAvailability ? '#e8f5e8' : '#ffe8e8';
                         const statusIcon = day.hasAvailability ? '✅' : '❌';
                         return `
                             <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: ${bgColor};">
                                 <strong>${statusIcon} ${date}</strong><br>
-                                <strong>Evento:</strong> ${day.eventName || 'N/A'}<br>
-                                <strong>Status:</strong> ${day.eventStatus || 'N/A'}<br>
-                                <strong>Disponível:</strong> ${day.hasAvailability ? 'Sim' : 'Não'}<br>
-                                <strong>Horários:</strong> ${day.availableSlots.join(', ') || 'Nenhum'}<br>
-                                <strong>Mensagem:</strong> ${day.message || 'N/A'}
+                                <strong>hasAvailability:</strong> ${day.hasAvailability}<br>
+                                <strong>eventName:</strong> ${day.eventName || 'N/A'}<br>
+                                <strong>eventStatus:</strong> ${day.eventStatus || 'N/A'}<br>
+                                <strong>availableSlots:</strong> [${day.availableSlots.join(', ') || 'Nenhum'}]<br>
+                                <strong>bookedSlots:</strong> [${day.bookedSlots.join(', ') || 'Nenhum'}]<br>
+                                <strong>message:</strong> ${day.message || 'N/A'}
                             </div>
                         `;
                     }).join('')}
                     
-                    <h5>🔍 DADOS BRUTOS DO MAKE (para debug):</h5>
+                    <h5>🔍 DADOS BRUTOS DO MAKE (formato original):</h5>
                     <pre>${JSON.stringify(makeData, null, 2)}</pre>
+                    
+                    <h5>🔄 DADOS CONVERTIDOS (formato do frontend):</h5>
+                    <pre>${JSON.stringify(frontendData, null, 2)}</pre>
                 `;
 
             } catch (error) {
