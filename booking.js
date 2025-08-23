@@ -704,6 +704,23 @@ async function handleSubmit(event) {
       date: data['date'],
       time: data['meeting-time'],
       datetime: `${data['date']}T${data['meeting-time']}:00`,
+      
+      // Nome do evento para o calendário
+      eventName: `Agendamento Presencial (${data.name})`,
+      
+      // Informações organizadas para o calendário
+      eventDescription: `INFORMAÇÕES DO CLIENTE:
+
+Nome: ${data.name}
+Telefone: ${data.phone}
+Email: ${data.email}
+CPF: ${data.cpf}
+RG: ${data.rg}
+Fetiche: ${data.fetiche}
+Como conheceu: ${data.conheceu}
+Motivo: ${data.reason || 'Agendamento via site'}`,
+      
+      // Dados individuais para processamento
       name: data.name,
       rg: data.rg,
       cpf: data.cpf,

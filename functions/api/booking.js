@@ -77,7 +77,7 @@ export async function onRequestPost(context) {
 }
 
 function isValidBookingData(data) {
-  const required = ['date', 'time', 'datetime', 'name', 'email', 'phone', 'duration', 'reason'];
+  const required = ['date', 'time', 'datetime', 'name', 'rg', 'cpf', 'email', 'phone', 'fetiche', 'conheceu', 'duration', 'reason'];
   
   for (const field of required) {
     if (!data[field] || (typeof data[field] === 'string' && !data[field].trim())) {
