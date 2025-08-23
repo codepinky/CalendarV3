@@ -79,11 +79,11 @@ async function checkWeeklyAvailability(startDate, endDate) {
 function processCalendarEvents(availabilityData, date) {
   // Verificar se os dados são válidos
   if (!availabilityData) {
-    console.log('⚠️ Dados do Make são undefined, usando fallback padrão');
+    console.log('⚠️ Dados do Make são undefined, não há horários disponíveis');
     return {
       success: true,
       date: date,
-      availableSlots: generateDefaultTimeSlots(date),
+      availableSlots: [], // Nenhum horário disponível
       bookedSlots: [],
       lastUpdated: new Date().toISOString(),
       totalEvents: 0,
@@ -199,7 +199,7 @@ function processCalendarEvents(availabilityData, date) {
   return {
     success: true,
     date: date,
-    availableSlots: availabilityData.availableSlots || generateDefaultTimeSlots(date),
+    availableSlots: availabilityData.availableSlots || [],
     bookedSlots: bookedSlots,
     lastUpdated: new Date().toISOString(),
     totalEvents: availabilityData.totalEvents || 0,
@@ -207,11 +207,7 @@ function processCalendarEvents(availabilityData, date) {
   };
 }
 
-// Função para gerar horários padrão de trabalho (alternados)
-function generateDefaultTimeSlots(date) {
-  // CORREÇÃO: Horários alternados conforme solicitado
-  return ['13:30', '15:30', '17:30', '19:30', '21:30'];
-}
+
 
 // Função para gerar mensagens amigáveis quando não há horários disponíveis
 function generateFriendlyNoSlotsMessage(availability, selectedDate) {
