@@ -277,19 +277,33 @@
             const resultsDiv = document.getElementById('results');
             const availability = data.agendarAvailability;
             
+            // Contar dias disponíveis vs indisponíveis
+            const totalDays = Object.keys(availability).length;
+            const availableDays = Object.values(availability).filter(day => day.hasAvailability).length;
+            const unavailableDays = totalDays - availableDays;
+            
             let html = `
                 <div class="results">
                     <h3>📅 Disponibilidade da Semana</h3>
                     <p><strong>Período:</strong> ${formatDate(data.startDate)} a ${formatDate(data.endDate)}</p>
                     <p><strong>Fonte:</strong> ${data.source}</p>
                     <p><strong>Última atualização:</strong> ${formatDateTime(data.lastUpdated)}</p>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                        <h4>📊 Resumo:</h4>
+                        <p>🟢 <strong>${availableDays} dias disponíveis</strong> | 🔴 <strong>${unavailableDays} dias indisponíveis</strong> | 📋 <strong>${totalDays} dias total</strong></p>
+                    </div>
                     <hr>
             `;
             
             // Ordenar dias por data
             const sortedDays = Object.keys(availability).sort();
             
+            console.log('📋 [DEBUG] Dias recebidos da API:', sortedDays);
+            console.log('📋 [DEBUG] Dados completos de disponibilidade:', availability);
+            
             sortedDays.forEach(date => {
+                console.log(`📋 [DEBUG] Processando dia no frontend: ${date}`, availability[date]);
                 const day = availability[date];
                 const isAvailable = day.hasAvailability;
                 const statusClass = isAvailable ? 'available' : 'unavailable';
@@ -329,12 +343,19 @@
         }
         
         function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('pt-BR', {
+            console.log('🗓️ [DEBUG] Formatando data:', dateString);
+            
+            // Usar UTC para evitar problemas de timezone
+            const date = new Date(dateString + 'T00:00:00.000Z');
+            const formattedDate = date.toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
-                year: 'numeric'
+                year: 'numeric',
+                timeZone: 'UTC'
             });
+            
+            console.log('🗓️ [DEBUG] Data formatada:', dateString, '->', formattedDate);
+            return formattedDate;
         }
         
         function formatDateTime(dateTimeString) {
@@ -349,9 +370,16 @@
         }
         
         function getDayName(dateString) {
-            const date = new Date(dateString);
+            console.log('📅 [DEBUG] Obtendo nome do dia para:', dateString);
+            
+            // Usar UTC para evitar problemas de timezone
+            const date = new Date(dateString + 'T00:00:00.000Z');
+            const dayIndex = date.getUTCDay();
             const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-            return days[date.getDay()];
+            const dayName = days[dayIndex];
+            
+            console.log('📅 [DEBUG] Nome do dia:', dateString, '->', dayName, '(índice:', dayIndex, ')');
+            return dayName;
         }
     </script>
 </body>
