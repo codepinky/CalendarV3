@@ -225,7 +225,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
   // Diferentes cenários e mensagens contextuais
   let message = '';
   let iconClass = 'no-slots';
-  let suggestionMessage = '';
   
   if (availability.source === 'Fallback Mode') {
     // Erro de integração com Make.com
@@ -237,16 +236,10 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
           Estamos verificando a disponibilidade de horários.<br>
           Por favor, tente novamente em alguns minutos.
         </div>
-        <div class="message-action">
-          <button onclick="generateTimeSlots()" class="retry-availability-btn">
-            🔄 Tentar Novamente
-          </button>
-        </div>
       </div>
     `;
   } else if (availability.bookedSlots && availability.bookedSlots.length > 0) {
     // Todos os horários estão ocupados
-    const totalSlots = 5; // horários padrão do sistema
     const occupiedSlots = availability.bookedSlots.length;
     
     if (isToday) {
@@ -258,7 +251,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
             Todos os ${occupiedSlots} horários de hoje (${formattedDate}) já foram agendados.<br>
             Que tal escolher outro dia?
           </div>
-          ${generateNextAvailableDaysSuggestion()}
         </div>
       `;
     } else {
@@ -270,7 +262,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
             Todos os horários de ${formattedDate} já foram reservados.<br>
             Escolha outra data disponível para seu agendamento.
           </div>
-          ${generateNextAvailableDaysSuggestion()}
         </div>
       `;
     }
@@ -286,7 +277,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
             Os atendimentos de hoje já encerraram.<br>
             Que tal agendar para amanhã ou outro dia?
           </div>
-          ${generateNextAvailableDaysSuggestion()}
         </div>
       `;
     } else {
@@ -298,7 +288,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
             Os horários restantes de hoje já passaram ou estão ocupados.<br>
             Escolha outro dia para seu agendamento.
           </div>
-          ${generateNextAvailableDaysSuggestion()}
         </div>
       `;
     }
@@ -312,7 +301,6 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
           Não há atendimentos disponíveis para ${dayOfWeek}, ${formattedDate}.<br>
           Escolha outra data que esteja disponível.
         </div>
-        ${generateNextAvailableDaysSuggestion()}
       </div>
     `;
   }
@@ -320,148 +308,9 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
   return message;
 }
 
-// Função para sugerir próximos dias disponíveis
-function generateNextAvailableDaysSuggestion() {
-  return `
-    <div class="suggestion-section">
-      <div class="suggestion-title">💡 Sugestão:</div>
-      <div class="suggestion-content">
-        <button onclick="suggestNextAvailableDays()" class="suggest-days-btn">
-          Ver próximos dias disponíveis
-        </button>
-        <button onclick="generateAvailableDates()" class="refresh-dates-btn">
-          🔄 Atualizar calendário
-        </button>
-      </div>
-    </div>
-  `;
-}
 
-// Função para sugerir próximos dias disponíveis
-async function suggestNextAvailableDays() {
-  const today = new Date();
-  const nextWeek = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
-  
-  const startDate = today.toISOString().split('T')[0];
-  const endDate = nextWeek.toISOString().split('T')[0];
-  
-  try {
-    const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startDate}&endDate=${endDate}`);
-    const data = await response.json();
-    
-    if (data.success && data.agendarAvailability) {
-      const availableDays = Object.keys(data.agendarAvailability)
-        .filter(dateKey => {
-          const dayData = data.agendarAvailability[dateKey];
-          const [year, month, day] = dateKey.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          const dayOfWeek = date.getDay();
-          return dayData.hasAvailability && dayOfWeek >= 1 && dayOfWeek <= 6;
-        })
-        .slice(0, 3); // Mostrar apenas os próximos 3 dias
-      
-      if (availableDays.length > 0) {
-        let suggestionHTML = `
-          <div class="available-days-suggestion">
-            <h4>📅 Próximos dias disponíveis:</h4>
-            <div class="suggested-days">
-        `;
-        
-        availableDays.forEach(dateKey => {
-          const [year, month, day] = dateKey.split('-').map(Number);
-          const date = new Date(year, month - 1, day);
-          const dayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
-          const dayNum = date.getDate();
-          const monthName = date.toLocaleDateString('pt-BR', { month: 'short' });
-          
-          suggestionHTML += `
-            <button class="suggested-day-btn" onclick="selectSuggestedDate('${dateKey}')">
-              <span class="suggested-day-num">${dayNum}</span>
-              <span class="suggested-day-month">${monthName}</span>
-              <span class="suggested-day-name">${dayName}</span>
-            </button>
-          `;
-        });
-        
-        suggestionHTML += `
-            </div>
-          </div>
-        `;
-        
-        // Mostrar sugestão em modal ou área específica
-        showSuggestionModal(suggestionHTML);
-      } else {
-        showResult('info', 'Não há dias disponíveis na próxima semana. Tente selecionar uma data mais distante.');
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao buscar sugestões:', error);
-    showResult('error', 'Erro ao buscar próximos dias disponíveis.');
-  }
-}
 
-// Função para mostrar modal de sugestões
-function showSuggestionModal(content) {
-  // Remover modal anterior se existir
-  const existingModal = document.querySelector('.suggestion-modal');
-  if (existingModal) {
-    existingModal.remove();
-  }
-  
-  const modal = document.createElement('div');
-  modal.className = 'suggestion-modal';
-  modal.innerHTML = `
-    <div class="suggestion-modal-content">
-      <div class="suggestion-modal-header">
-        <span class="suggestion-modal-title">Dias Disponíveis</span>
-        <button class="suggestion-modal-close" onclick="closeSuggestionModal()">×</button>
-      </div>
-      <div class="suggestion-modal-body">
-        ${content}
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  // Auto fechar após 10 segundos
-  setTimeout(() => {
-    closeSuggestionModal();
-  }, 10000);
-}
 
-// Função para fechar modal de sugestões
-function closeSuggestionModal() {
-  const modal = document.querySelector('.suggestion-modal');
-  if (modal) {
-    modal.remove();
-  }
-}
-
-// Função para selecionar data sugerida
-function selectSuggestedDate(dateKey) {
-  // Fechar modal
-  closeSuggestionModal();
-  
-  // Selecionar a data no calendário
-  const dateSlots = document.querySelectorAll('.date-slot');
-  dateSlots.forEach(slot => {
-    slot.classList.remove('selected');
-    if (slot.dataset.date === dateKey) {
-      slot.classList.add('selected');
-      slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  });
-  
-  // Atualizar campo hidden
-  document.getElementById('date').value = dateKey;
-  
-  // Gerar horários para a data selecionada
-  generateTimeSlots();
-  
-  // Mostrar mensagem de sucesso
-  showResult('success', `Data ${dateKey} selecionada! Escolha um horário disponível.`);
-}
 
 // Função para gerar os dias disponíveis baseado no availability do Make
 async function generateAvailableDates() {
