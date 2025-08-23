@@ -37,7 +37,14 @@ export async function onRequestGet(context) {
         }, 400, context);
       }
 
-      const makeUrl = 'https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j';
+      // CORREÇÃO: Enviar parâmetro de data para o webhook de checagem diária
+      const makeUrl = `https://hook.us2.make.com/d22auss6t11cvqr3oy3aqm5giuy5ca6j?date=${date}`;
+      
+      console.log('🔍 [DEBUG] Checagem diária - Enviando requisição:', {
+        url: makeUrl,
+        date: date,
+        purpose: 'Verificar horários ocupados no dia específico'
+      });
       
       try {
         const availabilityResponse = await fetch(makeUrl, {
@@ -47,9 +54,21 @@ export async function onRequestGet(context) {
           }
         });
 
+        console.log('📡 [DEBUG] Resposta do Make.com (checagem diária) - Status:', availabilityResponse.status);
+        
         if (availabilityResponse.ok) {
           const calendarData = await availabilityResponse.json().catch(() => ({}));
+          
+          console.log('📦 [DEBUG] JSON recebido do Make.com (checagem diária):', JSON.stringify(calendarData, null, 2));
+          console.log('📦 [DEBUG] Processando dados para data:', date);
+          
           const processedData = processMakeData(calendarData, date);
+          
+          console.log('✅ [DEBUG] Dados processados (checagem diária):', {
+            availableSlots: processedData.availableSlots,
+            bookedSlots: processedData.bookedSlots,
+            totalEvents: processedData.totalEvents
+          });
           
           return json({
             success: true,
@@ -57,8 +76,10 @@ export async function onRequestGet(context) {
             ...processedData,
             timezone: processedData.timezone || 'America/Sao_Paulo',
             lastUpdated: new Date().toISOString(),
-            source: 'Make Integration'
+            source: 'Make Integration (Daily Check)'
           }, 200, context);
+        } else {
+          console.error('❌ [DEBUG] Erro na resposta do Make.com (checagem diária):', availabilityResponse.status, availabilityResponse.statusText);
         }
       } catch (error) {
         console.error('Erro ao consultar Make:', error);
