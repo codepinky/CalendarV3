@@ -516,24 +516,32 @@ function processAgendarMakeData(makeData, startDate, endDate) {
         }
       });
       
-      // Processar todos os dias da semana para mostrar dias sem eventos
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      // Processar todos os dias do período solicitado
+      const start = new Date(startDate + 'T00:00:00.000Z');
+      const end = new Date(endDate + 'T00:00:00.000Z');
       
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      console.log(`📅 [DEBUG] Processando período: ${startDate} até ${endDate}`);
+      console.log(`📅 [DEBUG] Data início: ${start.toISOString()}, Data fim: ${end.toISOString()}`);
+      
+      for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         
-                   if (!agendarAvailability[dateStr]) {
-             agendarAvailability[dateStr] = {
-               date: dateStr,
-               hasAvailability: false,
-               eventName: null,
-               eventStatus: null,
-               availableSlots: [],
-               bookedSlots: [],
-               message: 'Sem eventos "Atender" para este dia'
-             };
-           }
+        console.log(`📅 [DEBUG] Verificando dia: ${dateStr}`);
+        
+        if (!agendarAvailability[dateStr]) {
+          console.log(`📅 [DEBUG] Dia ${dateStr} não tem eventos - marcando como INDISPONÍVEL`);
+          agendarAvailability[dateStr] = {
+            date: dateStr,
+            hasAvailability: false,
+            eventName: null,
+            eventStatus: null,
+            availableSlots: [],
+            bookedSlots: [],
+            message: 'Sem eventos "Atender" para este dia'
+          };
+        } else {
+          console.log(`📅 [DEBUG] Dia ${dateStr} já processado com eventos`);
+        }
       }
       
       return agendarAvailability;
