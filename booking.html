@@ -50,10 +50,22 @@
           <!-- Campos hidden para data e horário -->
           <input type="hidden" id="date" name="date" required>
           <input type="hidden" id="meeting-time" name="meeting-time" required>
+          
           <div class="form-row">
             <div class="form-group">
               <label for="name">Nome Completo</label>
               <input id="name" name="name" type="text" required />
+            </div>
+            <div class="form-group">
+              <label for="rg">RG</label>
+              <input id="rg" name="rg" type="text" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpf">CPF</label>
+              <input id="cpf" name="cpf" type="text" required />
             </div>
             <div class="form-group">
               <label for="email">E-mail</label>
@@ -72,6 +84,24 @@
                 <option value="60" selected>1 hora</option>
               </select>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label for="fetiche">Fetiche</label>
+            <textarea id="fetiche" name="fetiche" rows="2" placeholder="Descreva seus fetiches ou preferências..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="conheceu">De onde você me conheceu?</label>
+            <select id="conheceu" name="conheceu" required>
+              <option value="">Selecione uma opção</option>
+              <option value="site">Site</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="twitter">Twitter</option>
+              <option value="indicacao">Indicação de amigo</option>
+              <option value="outro">Outro</option>
+            </select>
           </div>
 
           <div class="form-group">

@@ -672,36 +672,45 @@ async function handleSubmit(event) {
       date: selectedDate,
       'meeting-time': document.getElementById('meeting-time').value,
       name: document.getElementById('name').value,
+      rg: document.getElementById('rg').value,
+      cpf: document.getElementById('cpf').value,
       email: document.getElementById('email').value,
       phone: document.getElementById('phone').value,
       duration: document.getElementById('duration').value,
+      fetiche: document.getElementById('fetiche').value,
+      conheceu: document.getElementById('conheceu').value,
       reason: document.getElementById('reason').value
     };
     
     console.log('🎯 SOLUÇÃO - Dados capturados manualmente:', data);
     
     // Validações básicas
-    if (!data['date'] || !data['meeting-time'] || !data.name || !data.email || !data.phone) {
+    if (!data['date'] || !data['meeting-time'] || !data.name || !data.rg || !data.cpf || !data.email || !data.phone || !data.fetiche || !data.conheceu) {
       console.log('Campos faltando:');
       if (!data['date']) console.log('- Data não selecionada');
       if (!data['meeting-time']) console.log('- Horário não selecionado');
       if (!data.name) console.log('- Nome não preenchido');
+      if (!data.rg) console.log('- RG não preenchido');
+      if (!data.cpf) console.log('- CPF não preenchido');
       if (!data.email) console.log('- Email não preenchido');
       if (!data.phone) console.log('- Telefone não preenchido');
+      if (!data.fetiche) console.log('- Fetiche não preenchido');
+      if (!data.conheceu) console.log('- Como conheceu não selecionado');
       throw new Error('Por favor, preencha todos os campos obrigatórios.');
     }
     
     // Formatar dados para o Make (formato que a API espera)
     const makeData = {
-              date: data['date'],
+      date: data['date'],
       time: data['meeting-time'],
-              datetime: `${data['date']}T${data['meeting-time']}:00`,
+      datetime: `${data['date']}T${data['meeting-time']}:00`,
       name: data.name,
+      rg: data.rg,
+      cpf: data.cpf,
       email: data.email,
       phone: data.phone,
-      age: data.age || '',
-      city: data.city || '',
-      state: data.state || '',
+      fetiche: data.fetiche,
+      conheceu: data.conheceu,
       reason: data.reason || 'Agendamento via site',
       duration: 60,
       timestamp: new Date().toISOString(),
