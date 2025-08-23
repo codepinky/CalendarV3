@@ -312,6 +312,16 @@ function processMakeData(makeData, date) {
             
             const hour = brasiliaTime.getHours();
             const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
+            
+            console.log(`🔍 DEBUG BUSY SLOT - Evento ocupado encontrado:`, {
+              originalStart: slot.start,
+              startTime: startTime.toISOString(),
+              brasiliaTime: brasiliaTime.toLocaleString('pt-BR'),
+              extractedHour: hour,
+              generatedSlot: timeSlot,
+              slotDetails: slot
+            });
+            
             bookedSlots.push(timeSlot);
           } catch (error) {
             console.warn('Erro ao processar slot ocupado:', slot, error);
@@ -327,7 +337,8 @@ function processMakeData(makeData, date) {
         const previousSlot = `${(hour - 1).toString().padStart(2, '0')}:30`;
         const nextSlot = `${(hour + 1).toString().padStart(2, '0')}:30`;
         
-        if (bookedSlots.includes(previousSlot) || bookedSlots.includes(nextSlot)) return false;
+        // REMOVIDO: Lógica de horários adjacentes - só remove horários realmente ocupados
+        // if (bookedSlots.includes(previousSlot) || bookedSlots.includes(nextSlot)) return false;
         
         return true;
       });
@@ -392,7 +403,8 @@ function processMakeData(makeData, date) {
         const previousSlot = `${(hour - 1).toString().padStart(2, '0')}:30`;
         const nextSlot = `${(hour + 1).toString().padStart(2, '0')}:30`;
         
-        if (bookedSlots.includes(previousSlot) || bookedSlots.includes(nextSlot)) return false;
+        // REMOVIDO: Lógica de horários adjacentes - só remove horários realmente ocupados
+        // if (bookedSlots.includes(previousSlot) || bookedSlots.includes(nextSlot)) return false;
         
         return true;
       });
@@ -511,11 +523,12 @@ function processAgendarMakeData(makeData, startDate, endDate) {
               eventStatus: cleanEventStatus || 'Ativo',
               availableSlots: isAvailable ? (() => {
                 console.log(`📅 DEBUG: Gerando slots para ${dateKey}, isAvailable=${isAvailable}`);
-                const slots = generateDynamicTimeSlots(dateKey);
+                // TODO: Implementar verificação de bookedSlots reais para eventos "Atender"
+                const slots = generateDynamicTimeSlots(dateKey, []); // Por ora, sem ocupações
                 console.log(`📅 DEBUG: Slots gerados para ${dateKey}:`, slots);
                 return slots;
               })() : [],
-              bookedSlots: [],
+              bookedSlots: [], // Para eventos "Atender", bookedSlots deve vir de outra fonte
               message: isAvailable ? 'Dia com evento "Atender" ativo para agendamento' : 'Evento "Atender" não está ativo',
               eventDetails: {
                 start: event.start,
@@ -574,18 +587,21 @@ function generateDefaultTimeSlots(date) {
   return ['13:30', '15:30', '17:30', '19:30', '21:30'];
 }
 
-function generateDynamicTimeSlots(dateStr) {
+function generateDynamicTimeSlots(dateStr, bookedSlots = []) {
   try {
-    // CORREÇÃO: Para eventos "Atender", retornar TODOS os horários independente de ocupações
-    // Eventos "Atender" são para criar disponibilidade, não para bloquear
+    // Horários base do sistema
     const allSlots = ['13:30', '15:30', '17:30', '19:30', '21:30'];
     
-    console.log(`🕐 DEBUG generateDynamicTimeSlots para ${dateStr}:`);
-    console.log(`   - Tipo: Evento "Atender" - horários fixos independente de ocupações`);
-    console.log(`   - Horários retornados:`, allSlots);
-    console.log(`   - TODOS os 5 horários disponíveis para agendamento`);
+    // CORREÇÃO: Filtrar apenas horários realmente ocupados (não adjacentes)
+    const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
     
-    return allSlots;
+    console.log(`🕐 DEBUG generateDynamicTimeSlots para ${dateStr}:`);
+    console.log(`   - Horários base:`, allSlots);
+    console.log(`   - Horários ocupados:`, bookedSlots);
+    console.log(`   - Horários disponíveis:`, availableSlots);
+    console.log(`   - Lógica: Remove APENAS horários realmente ocupados`);
+    
+    return availableSlots;
     
   } catch (error) {
     console.warn('Erro ao gerar horários dinâmicos, usando padrão:', error);
