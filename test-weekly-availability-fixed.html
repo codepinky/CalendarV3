@@ -210,21 +210,28 @@
                                         const eventDate = new Date(dates[0]);
                                         const dateKey = eventDate.toISOString().split('T')[0];
                                         
-                                        // Verificar se contém "Atender"
+                                        // Verificar se contém "Atender" E "confirmed"
                                         const hasAtender = concatenatedValue.includes('Atender');
-                                        const isAvailable = hasAtender;
+                                        const hasConfirmed = concatenatedValue.includes('confirmed');
+                                        const isAvailable = hasAtender && hasConfirmed;
                                         
-                                        log(`✅ Data extraída: ${dateKey}, Atender: ${hasAtender}`);
+                                        log(`✅ Data extraída: ${dateKey}, Atender: ${hasAtender}, Confirmed: ${hasConfirmed}`);
+                                        log(`✅ Disponibilidade: ${isAvailable} (precisa de Atender + confirmed)`);
                                         
                                         frontendFormat.weeklyAvailability[dateKey] = {
                                             date: dateKey,
                                             hasAvailability: isAvailable,
                                             eventName: hasAtender ? 'Atender' : 'Evento',
-                                            eventStatus: hasAtender ? 'confirmed' : 'Agendado',
+                                            eventStatus: hasConfirmed ? 'confirmed' : 'Agendado',
                                             availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
                                             bookedSlots: [],
-                                            message: isAvailable ? 'Dia disponível para agendamento' : 'Dia não disponível',
-                                            rawValue: concatenatedValue
+                                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam requisitos)',
+                                            rawValue: concatenatedValue,
+                                            requirements: {
+                                                hasAtender: hasAtender,
+                                                hasConfirmed: hasConfirmed,
+                                                bothRequired: isAvailable
+                                            }
                                         };
                                         
                                     } catch (error) {
@@ -367,23 +374,33 @@
                     <h5>📊 FORMATO DO FRONTEND (weeklyAvailability):</h5>
                     <p><strong>Total de dias:</strong> ${Object.keys(frontendData.weeklyAvailability).length}</p>
                     
-                    <h5>📅 DIAS PROCESSADOS (formato que o frontend lê):</h5>
-                    ${Object.keys(frontendData.weeklyAvailability).map(date => {
-                        const day = frontendData.weeklyAvailability[date];
-                        const bgColor = day.hasAvailability ? '#e8f5e8' : '#ffe8e8';
-                        const statusIcon = day.hasAvailability ? '✅' : '❌';
-                        return `
-                            <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: ${bgColor};">
-                                <strong>${statusIcon} ${date}</strong><br>
-                                <strong>hasAvailability:</strong> ${day.hasAvailability}<br>
-                                <strong>eventName:</strong> ${day.eventName || 'N/A'}<br>
-                                <strong>eventStatus:</strong> ${day.eventStatus || 'N/A'}<br>
-                                <strong>availableSlots:</strong> [${day.availableSlots.join(', ') || 'Nenhum'}]<br>
-                                <strong>bookedSlots:</strong> [${day.bookedSlots.join(', ') || 'Nenhum'}]<br>
-                                <strong>message:</strong> ${day.message || 'N/A'}
-                            </div>
-                        `;
-                    }).join('')}
+                                         <h5>📅 DIAS PROCESSADOS (formato que o frontend lê):</h5>
+                     ${Object.keys(frontendData.weeklyAvailability).map(date => {
+                         const day = frontendData.weeklyAvailability[date];
+                         const bgColor = day.hasAvailability ? '#e8f5e8' : '#ffe8e8';
+                         const statusIcon = day.hasAvailability ? '✅' : '❌';
+                         
+                         // Mostrar requisitos se disponível
+                         const requirementsHtml = day.requirements ? `
+                             <strong>Requisitos:</strong><br>
+                             • Atender: ${day.requirements.hasAtender ? '✅' : '❌'}<br>
+                             • Confirmed: ${day.requirements.hasConfirmed ? '✅' : '❌'}<br>
+                             • Ambos necessários: ${day.requirements.bothRequired ? '✅' : '❌'}
+                         ` : '';
+                         
+                         return `
+                             <div style="border: 1px solid #ccc; padding: 10px; margin: 5px; background: ${bgColor};">
+                                 <strong>${statusIcon} ${date}</strong><br>
+                                 <strong>hasAvailability:</strong> ${day.hasAvailability}<br>
+                                 <strong>eventName:</strong> ${day.eventName || 'N/A'}<br>
+                                 <strong>eventStatus:</strong> ${day.eventStatus || 'N/A'}<br>
+                                 <strong>availableSlots:</strong> [${day.availableSlots.join(', ') || 'Nenhum'}]<br>
+                                 <strong>bookedSlots:</strong> [${day.bookedSlots.join(', ') || 'Nenhum'}]<br>
+                                 <strong>message:</strong> ${day.message || 'N/A'}<br>
+                                 ${requirementsHtml}
+                             </div>
+                         `;
+                     }).join('')}
                     
                     <h5>🔍 DADOS BRUTOS DO MAKE (formato original):</h5>
                     <pre>${JSON.stringify(makeData, null, 2)}</pre>
@@ -497,20 +514,26 @@
                              const eventDate = new Date(dates[0]);
                              const dateKey = eventDate.toISOString().split('T')[0];
                              
-                             // Verificar se contém "Atender"
-                             const hasAtender = concatenatedValue.includes('Atender');
-                             const isAvailable = hasAtender;
-                             
-                             weeklyAvailability[dateKey] = {
-                               date: dateKey,
-                               hasAvailability: isAvailable,
-                               eventName: hasAtender ? 'Atender' : 'Evento',
-                               eventStatus: hasAtender ? 'confirmed' : 'Agendado',
-                               availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
-                               bookedSlots: [],
-                               message: 'Dia disponível para agendamento (formato concatenado)',
-                               rawValue: concatenatedValue
-                             };
+                                                       // Verificar se contém "Atender" E "confirmed"
+                          const hasAtender = concatenatedValue.includes('Atender');
+                          const hasConfirmed = concatenatedValue.includes('confirmed');
+                          const isAvailable = hasAtender && hasConfirmed;
+                          
+                          weeklyAvailability[dateKey] = {
+                            date: dateKey,
+                            hasAvailability: isAvailable,
+                            eventName: hasAtender ? 'Atender' : 'Evento',
+                            eventStatus: hasConfirmed ? 'confirmed' : 'Agendado',
+                            availableSlots: isAvailable ? ['13:30', '15:30', '17:30', '19:30', '21:30'] : [],
+                            bookedSlots: [],
+                            message: isAvailable ? 'Dia disponível para agendamento (Atender + confirmed)' : 'Dia não disponível (faltam requisitos)',
+                            rawValue: concatenatedValue,
+                            requirements: {
+                              hasAtender: hasAtender,
+                              hasConfirmed: hasConfirmed,
+                              bothRequired: isAvailable
+                            }
+                          };
                              
                              log(`✅ Dia ${dateKey} processado: Disponibilidade = ${isAvailable}`);
                              
