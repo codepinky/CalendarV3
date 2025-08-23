@@ -1,13 +1,13 @@
-# Verificação de Disponibilidade - Eventos "Agendar"
+# Verificação de Disponibilidade - Eventos "Atender"
 
 ## Descrição
-Esta funcionalidade permite verificar quais dias da semana têm eventos chamados "Agendar" ativos no Google Calendar, através da integração com Make.com.
+Esta funcionalidade permite verificar quais dias da semana têm eventos chamados "Atender" ativos no Google Calendar, através da integração com Make.com.
 
 ## Como Funciona
 
 ### 1. Configuração no Google Calendar
 - Crie eventos manualmente no Google Calendar
-- Nome do evento deve ser exatamente "Agendar"
+- Nome do evento deve ser exatamente "Atender"
 - O Make.com irá consultar esses eventos para determinar disponibilidade
 
 ### 2. Endpoint da API
@@ -16,7 +16,7 @@ GET /api/availability?checkAgendar=true&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
 ```
 
 ### 3. Parâmetros
-- `checkAgendar=true` - Ativa a verificação específica de eventos "Agendar"
+- `checkAgendar=true` - Ativa a verificação específica de eventos "Atender"
 - `startDate` - Data de início da semana (formato: YYYY-MM-DD)
 - `endDate` - Data de fim da semana (formato: YYYY-MM-DD)
 
@@ -45,7 +45,7 @@ if (data.success) {
   const availableDays = Object.values(data.agendarAvailability)
     .filter(day => day.hasAvailability);
     
-  console.log('Dias com evento "Agendar" ativo:', availableDays);
+  console.log('Dias com evento "Atender" ativo:', availableDays);
 }
 ```
 
@@ -59,11 +59,11 @@ if (data.success) {
     "2024-01-15": {
       "date": "2024-01-15",
       "hasAvailability": true,
-      "eventName": "Agendar",
+      "eventName": "Atender",
       "eventStatus": "confirmed",
       "availableSlots": ["13:30", "14:30", "15:30", "16:30", "17:30", "18:30", "19:30", "20:30", "21:30"],
       "bookedSlots": [],
-      "message": "Dia com evento \"Agendar\" ativo para agendamento",
+      "message": "Dia com evento \"Atender\" ativo para agendamento",
       "eventDetails": {
         "start": "2024-01-15T13:00:00Z",
         "end": "2024-01-15T22:00:00Z",
@@ -77,13 +77,13 @@ if (data.success) {
       "eventStatus": null,
       "availableSlots": [],
       "bookedSlots": [],
-      "message": "Sem eventos \"Agendar\" para este dia"
+      "message": "Sem eventos \"Atender\" para este dia"
     }
   },
   "timezone": "America/Sao_Paulo",
   "lastUpdated": "2024-01-15T10:30:00.000Z",
-  "source": "Make.com - Eventos Agendar",
-  "description": "Dias com eventos \"Agendar\" ativos para agendamento"
+  "source": "Make.com - Eventos Atender",
+  "description": "Dias com eventos \"Atender\" ativos para agendamento"
 }
 ```
 
@@ -97,14 +97,14 @@ https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce
 ### Parâmetros Esperados
 - `startDate` - Data de início
 - `endDate` - Data de fim
-- `eventName` - Nome do evento (opcional, para filtrar por "Agendar")
+- `eventName` - Nome do evento (opcional, para filtrar por "Atender")
 
 ### Resposta Esperada do Make
 ```json
 {
   "events": [
     {
-      "name": "Agendar",
+      "name": "Atender",
       "start": "2024-01-15T13:00:00Z",
       "end": "2024-01-15T22:00:00Z",
       "status": "confirmed",

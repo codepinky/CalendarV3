@@ -138,8 +138,8 @@ export async function onRequestGet(context) {
         }, 400, context);
       }
       
-      // URL específica para verificar eventos "Agendar"
-      const makeUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}&eventName=Agendar`;
+      // URL específica para verificar eventos "Atender"
+      const makeUrl = `https://hook.us2.make.com/wvkq5vbyp9g80pv3n89rm2lvc7hgggce?startDate=${startDate}&endDate=${endDate}&eventName=Atender`;
       
       try {
         const availabilityResponse = await fetch(makeUrl, {
@@ -160,8 +160,8 @@ export async function onRequestGet(context) {
             agendarAvailability: agendarAvailability,
             timezone: 'America/Sao_Paulo',
             lastUpdated: new Date().toISOString(),
-            source: 'Make.com - Eventos Agendar',
-            description: 'Dias com eventos "Agendar" ativos para agendamento'
+                      source: 'Make.com - Eventos Atender',
+          description: 'Dias com eventos "Atender" ativos para agendamento'
           }, 200, context);
         } else {
           return json({
@@ -172,7 +172,7 @@ export async function onRequestGet(context) {
           }, 500, context);
         }
       } catch (error) {
-        console.error('Erro ao consultar Make.com para eventos Agendar:', error);
+        console.error('Erro ao consultar Make.com para eventos Atender:', error);
         
         return json({
           success: false,
@@ -411,10 +411,10 @@ function processAgendarMakeData(makeData, startDate, endDate) {
     if (makeData && makeData.events && Array.isArray(makeData.events)) {
       const agendarAvailability = {};
       
-      // Filtrar apenas eventos chamados "Agendar"
+      // Filtrar apenas eventos chamados "Atender"
       const agendarEvents = makeData.events.filter(event => {
         const eventName = typeof event.name === 'string' ? event.name.replace(/^"+|"+$/g, '') : event.name;
-        return eventName === 'Agendar';
+        return eventName === 'Atender';
       });
       
       agendarEvents.forEach(event => {
@@ -432,14 +432,14 @@ function processAgendarMakeData(makeData, startDate, endDate) {
                               cleanEventStatus === 'active' ||
                               cleanEventStatus === 'confirmed';
             
-            agendarAvailability[dateKey] = {
-              date: dateKey,
-              hasAvailability: isAvailable,
-              eventName: cleanEventName || 'Agendar',
-              eventStatus: cleanEventStatus || 'Ativo',
-              availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
-              bookedSlots: [],
-              message: isAvailable ? 'Dia com evento "Agendar" ativo para agendamento' : 'Evento "Agendar" não está ativo',
+                         agendarAvailability[dateKey] = {
+               date: dateKey,
+               hasAvailability: isAvailable,
+               eventName: cleanEventName || 'Atender',
+               eventStatus: cleanEventStatus || 'Ativo',
+               availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
+               bookedSlots: [],
+               message: isAvailable ? 'Dia com evento "Atender" ativo para agendamento' : 'Evento "Atender" não está ativo',
               eventDetails: {
                 start: event.start,
                 end: event.end,
@@ -447,7 +447,7 @@ function processAgendarMakeData(makeData, startDate, endDate) {
               }
             };
           } catch (error) {
-            console.warn('Erro ao processar evento Agendar:', event, error);
+            console.warn('Erro ao processar evento Atender:', event, error);
           }
         }
       });
@@ -459,17 +459,17 @@ function processAgendarMakeData(makeData, startDate, endDate) {
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         
-        if (!agendarAvailability[dateStr]) {
-          agendarAvailability[dateStr] = {
-            date: dateStr,
-            hasAvailability: false,
-            eventName: null,
-            eventStatus: null,
-            availableSlots: [],
-            bookedSlots: [],
-            message: 'Sem eventos "Agendar" para este dia'
-          };
-        }
+                   if (!agendarAvailability[dateStr]) {
+             agendarAvailability[dateStr] = {
+               date: dateStr,
+               hasAvailability: false,
+               eventName: null,
+               eventStatus: null,
+               availableSlots: [],
+               bookedSlots: [],
+               message: 'Sem eventos "Atender" para este dia'
+             };
+           }
       }
       
       return agendarAvailability;
@@ -479,7 +479,7 @@ function processAgendarMakeData(makeData, startDate, endDate) {
     return generateEmptyWeeklyAvailability(startDate, endDate);
     
   } catch (error) {
-    console.error('Erro ao processar dados de eventos Agendar:', error);
+    console.error('Erro ao processar dados de eventos Atender:', error);
     return generateEmptyWeeklyAvailability(startDate, endDate);
   }
 }
