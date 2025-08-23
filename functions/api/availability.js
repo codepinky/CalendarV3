@@ -571,8 +571,12 @@ function generateDefaultTimeSlots(date) {
 
 function generateDynamicTimeSlots(dateStr) {
   try {
-    const date = new Date(dateStr);
+    // CORREÇÃO: Usar mesma lógica de criação de data para evitar timezone
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     const dayOfWeek = date.getDay();
+    
+    console.log(`🕐 DEBUG Data: ${dateStr} -> Date object: ${date.toString()}, dayOfWeek: ${dayOfWeek}`);
     
     // CORREÇÃO: Horários específicos alternados conforme solicitado
     // Segunda a sábado: 13:30, 15:30, 17:30, 19:30, 21:30
@@ -588,7 +592,10 @@ function generateDynamicTimeSlots(dateStr) {
     
     const slots = timeConfig[dayOfWeek] || timeConfig[1]; // Default para segunda
     
-    console.log(`🕐 Horários gerados para ${dateStr} (${['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][dayOfWeek]}):`, slots);
+    console.log(`🕐 DEBUG generateDynamicTimeSlots para ${dateStr}:`);
+    console.log(`   - Dia da semana: ${['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][dayOfWeek]} (${dayOfWeek})`);
+    console.log(`   - Horários configurados:`, timeConfig[dayOfWeek]);
+    console.log(`   - Horários retornados:`, slots);
     
     return slots;
     

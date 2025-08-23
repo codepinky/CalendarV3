@@ -109,42 +109,24 @@ function processCalendarEvents(availabilityData, date) {
     };
   }
   
-  // O Make agora retorna dados já processados
+  // O Make agora retorna dados já processados com horários corretos
   if (availabilityData && availabilityData.availableSlots) {
     console.log('✅ Dados processados recebidos do Make:', availabilityData);
     
-    // CORREÇÃO: Aplicar lógica de exclusão de horários consecutivos
     const originalSlots = availabilityData.availableSlots || [];
     
-    // 1. Filtrar horários alternados
-    const alternateSlots = originalSlots.filter((slot, index) => {
-      // Manter apenas horários alternados (índices pares: 0, 2, 4, 6, 8)
-      // Isso garante: 13:30, 15:30, 17:30, 19:30, 21:30
-      return index % 2 === 0;
-    });
-    
-    // 2. Filtrar horários que já passaram (para o dia atual)
+    // Apenas filtrar horários que já passaram (para o dia atual)
     const currentDate = new Date();
-    const selectedDate = new Date(date);
+    const [selectedYear, selectedMonth, selectedDay] = date.split('-').map(Number);
+    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
     
-    // CORREÇÃO: Comparação mais robusta de datas
-    const currentDay = currentDate.getDate();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    const selectedDay = selectedDate.getDate();
-    const selectedMonth = selectedDate.getMonth();
-    const selectedYear = selectedDate.getFullYear();
-    
-    const isToday = (currentDay === selectedDay) && 
-                   (currentMonth === selectedMonth) && 
-                   (currentYear === selectedYear);
+    const isToday = currentDate.toDateString() === selectedDate.toDateString();
     
     console.log(`📅 Data atual: ${currentDate.toLocaleDateString()}`);
     console.log(`📅 Data selecionada: ${selectedDate.toLocaleDateString()}`);
     console.log(`📅 É hoje? ${isToday}`);
     
-    const filteredSlots = alternateSlots.filter(slot => {
+    const filteredSlots = originalSlots.filter(slot => {
       if (!isToday) {
         console.log(`✅ Data ${date} não é hoje - todos os horários disponíveis`);
         return true; // Se não é hoje, todos os horários estão disponíveis
@@ -167,8 +149,8 @@ function processCalendarEvents(availabilityData, date) {
       return true; // Horário ainda não chegou
     });
     
-    console.log('📅 Horários originais recebidos:', originalSlots);
-    console.log('⏰ Horários filtrados (alternados):', filteredSlots);
+    console.log('📅 Horários originais da API:', originalSlots);
+    console.log('⏰ Horários finais (após filtro de tempo):', filteredSlots);
     
     return {
       success: true,
@@ -177,7 +159,7 @@ function processCalendarEvents(availabilityData, date) {
       bookedSlots: availabilityData.bookedSlots || [],
       lastUpdated: new Date().toISOString(),
       totalEvents: availabilityData.totalEvents || 0,
-      source: 'Make Integration (Frontend Filtered)'
+      source: 'Make Integration (API + Time Filter)'
     };
   }
   
@@ -238,7 +220,7 @@ async function generateAvailableDates() {
     <div class="loading-message">Carregando dias disponíveis...</div>
     <div class="date-slots" id="date-slots">
       <!-- Datas disponíveis serão geradas aqui -->
-    </div>
+      </div>
     <input type="hidden" id="date" name="date" required>
   `;
   
