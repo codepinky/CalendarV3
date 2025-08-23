@@ -3,56 +3,7 @@
 // Usar configurações do arquivo config.js
 const WORKING_HOURS = CONFIG.WORKING_HOURS;
 
-// Função para calcular semanas do mês (sempre começando no domingo)
-function getWeeksOfMonth(year, month) {
-  const weeks = [];
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  
-  // Encontrar o primeiro domingo do mês (ou domingo anterior)
-  let startDate = new Date(firstDay);
-  const dayOfWeek = firstDay.getDay(); // 0 = Domingo
-  startDate.setDate(firstDay.getDate() - dayOfWeek);
-  
-  // Gerar semanas até cobrir todo o mês (mínimo 5 semanas)
-  while (startDate <= lastDay || weeks.length < 5) {
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6); // +6 para chegar no sábado
-    
-    weeks.push({
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      weekNumber: weeks.length + 1,
-      label: `Semana ${weeks.length + 1}`
-    });
-    
-    startDate.setDate(startDate.getDate() + 7); // Próxima semana
-  }
-  
-  return weeks;
-}
-
-// Função para obter a semana atual (baseada no dia atual)
-function getCurrentWeek() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  
-  const weeks = getWeeksOfMonth(year, month);
-  
-  // Encontrar a semana que contém o dia atual
-  for (const week of weeks) {
-    const weekStart = new Date(week.startDate);
-    const weekEnd = new Date(week.endDate);
-    
-    if (today >= weekStart && today <= weekEnd) {
-      return week;
-    }
-  }
-  
-  // Fallback: primeira semana do mês
-  return weeks[0];
-}
+// OBSERVAÇÃO: Funções de semanas removidas - agora trabalhamos diretamente com dados do Make/availability
 
 
 
@@ -283,122 +234,108 @@ function generateDefaultTimeSlots(date) {
   return slots;
 }
 
-// Função para gerar as semanas disponíveis do mês
-function generateAvailableDates() {
+// Função para gerar os dias disponíveis baseado no availability do Make
+async function generateAvailableDates() {
   const dateSelector = document.querySelector('.date-selector');
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
   
-  // Obter todas as semanas do mês atual
-  const weeks = getWeeksOfMonth(currentYear, currentMonth);
-  const currentWeek = getCurrentWeek();
-  
   // Limpar conteúdo existente
   dateSelector.innerHTML = `
-    <label for="week">Semana do Encontro</label>
-    <div class="week-selector">
-      <button type="button" id="prev-week" class="week-nav-btn">← Semana Anterior</button>
-      <div class="current-week-display">
-        <span id="current-week-label">Carregando...</span>
-      </div>
-      <button type="button" id="next-week" class="week-nav-btn">Próxima Semana →</button>
+    <label for="date">Data do Encontro</label>
+    <div class="loading-message">Carregando dias disponíveis...</div>
+    <div class="date-slots" id="date-slots">
+      <!-- Datas disponíveis serão geradas aqui -->
     </div>
-    <div class="date-slots">
-      <!-- As datas da semana selecionada serão geradas aqui -->
-    </div>
-    <input type="hidden" id="selected-week-start" name="selected-week-start" required>
-    <input type="hidden" id="selected-week-end" name="selected-week-end" required>
     <input type="hidden" id="date" name="date" required>
   `;
   
-  // Configurar navegação de semanas
-  let currentWeekIndex = weeks.findIndex(week => 
-    week.startDate === currentWeek.startDate && week.endDate === currentWeek.endDate
-  );
-  if (currentWeekIndex === -1) currentWeekIndex = 0;
-  
-  const prevWeekBtn = document.getElementById('prev-week');
-  const nextWeekBtn = document.getElementById('next-week');
-  const currentWeekLabel = document.getElementById('current-week-label');
-  
-  // Função para atualizar semana selecionada
-  function updateWeekDisplay(weekIndex) {
-    const week = weeks[weekIndex];
-    if (!week) return;
+  try {
+    // Buscar dados de availability para o mês inteiro
+    const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString().split('T')[0];
+    const endOfMonth = new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0];
     
-    // Atualizar label da semana
-    const startDate = new Date(week.startDate);
-    const endDate = new Date(week.endDate);
-    const startDay = startDate.getDate();
-    const endDay = endDate.getDate();
-    const month = startDate.toLocaleDateString('pt-BR', { month: 'long' });
+    console.log('📅 Buscando availability do mês:', startOfMonth, 'a', endOfMonth);
     
-    currentWeekLabel.innerHTML = `
-      <strong>Semana ${week.weekNumber}</strong><br>
-      <span class="week-dates">${startDay} a ${endDay} de ${month}</span>
-    `;
+    const response = await fetch(`/api/availability?checkAgendar=true&startDate=${startOfMonth}&endDate=${endOfMonth}`);
+    const data = await response.json();
     
-    // Atualizar campos hidden
-    document.getElementById('selected-week-start').value = week.startDate;
-    document.getElementById('selected-week-end').value = week.endDate;
+    // Remover mensagem de loading
+    const loadingMessage = document.querySelector('.loading-message');
+    if (loadingMessage) loadingMessage.remove();
     
-    // Atualizar botões de navegação
-    prevWeekBtn.disabled = weekIndex === 0;
-    nextWeekBtn.disabled = weekIndex === weeks.length - 1;
+    if (data.success && data.agendarAvailability) {
+      console.log('✅ Dados de availability recebidos:', data.agendarAvailability);
+      generateDateSlotsFromAvailability(data.agendarAvailability);
+    } else {
+      console.error('❌ Erro ao buscar availability:', data.reason);
+      showAvailabilityError('Erro ao carregar datas disponíveis. Tente novamente.');
+    }
     
-    // Gerar slots de datas para esta semana
-    generateWeekDateSlots(week);
-    
-    // Consultar disponibilidade da semana
-    checkWeeklyAvailabilityAndUpdate(week.startDate, week.endDate);
+  } catch (error) {
+    console.error('💥 Erro na busca de availability:', error);
+    const loadingMessage = document.querySelector('.loading-message');
+    if (loadingMessage) loadingMessage.remove();
+    showAvailabilityError('Erro de conexão. Verifique sua internet e tente novamente.');
   }
-  
-  // Eventos de navegação
-  prevWeekBtn.addEventListener('click', () => {
-    if (currentWeekIndex > 0) {
-      currentWeekIndex--;
-      updateWeekDisplay(currentWeekIndex);
-    }
-  });
-  
-  nextWeekBtn.addEventListener('click', () => {
-    if (currentWeekIndex < weeks.length - 1) {
-      currentWeekIndex++;
-      updateWeekDisplay(currentWeekIndex);
-    }
-  });
-  
-  // Inicializar com semana atual
-  updateWeekDisplay(currentWeekIndex);
 }
 
 
 
-// Função para gerar slots de datas de uma semana específica
-function generateWeekDateSlots(week) {
+// Função para gerar slots de datas baseado nos dados de availability do Make
+function generateDateSlotsFromAvailability(availabilityData) {
   const dateSlotsContainer = document.querySelector('.date-slots');
   dateSlotsContainer.innerHTML = ''; // Limpar slots anteriores
   
-  // Gerar slots para cada dia da semana
-  const startDate = new Date(week.startDate);
-  for (let i = 0; i < 7; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  console.log('📅 Gerando slots baseado em availability:', availabilityData);
+  
+  // Converter object para array e ordenar por data
+  const availableDays = Object.keys(availabilityData)
+    .filter(dateKey => {
+      const dayData = availabilityData[dateKey];
+      const date = new Date(dateKey);
+      const dayOfWeek = date.getDay(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
+      
+      // Filtros: só dias úteis (seg-sab), do mês atual, que tenham availability
+      return dayOfWeek >= 1 && dayOfWeek <= 6 && // Segunda a sábado
+             date.getMonth() === currentMonth &&
+             date.getFullYear() === currentYear &&
+             dayData.hasAvailability === true;
+    })
+    .sort(); // Ordenar cronologicamente
+  
+  console.log('📅 Dias disponíveis filtrados:', availableDays);
+  
+  if (availableDays.length === 0) {
+    showAvailabilityError('Nenhum dia disponível encontrado para este mês.');
+    return;
+  }
+  
+  // Gerar um slot para cada dia disponível
+  availableDays.forEach(dateKey => {
+    const dayData = availabilityData[dateKey];
+    const date = new Date(dateKey);
+    const dayOfWeek = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+    const day = date.getDate();
+    const month = date.toLocaleDateString('pt-BR', { month: 'short' });
     
-    const formattedDate = currentDate.toISOString().split('T')[0];
-    const dayOfWeek = currentDate.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const day = currentDate.getDate();
-    const month = currentDate.toLocaleDateString('pt-BR', { month: 'short' });
+    console.log(`✅ Criando slot para: ${dateKey} (${dayData.eventName})`);
     
     const dateSlot = document.createElement('div');
-    dateSlot.className = 'date-slot';
-    dateSlot.dataset.date = formattedDate;
+    dateSlot.className = 'date-slot available';
+    dateSlot.dataset.date = dateKey;
+    dateSlot.title = dayData.message || 'Dia disponível para agendamento';
     
     dateSlot.innerHTML = `
       <span class="date-day">${day}</span>
       <span class="date-month">${month}</span>
       <span class="date-weekday">${dayOfWeek}</span>
+      <span class="availability-indicator">Disponível</span>
     `;
     
     // Adicionar evento de clique
@@ -408,56 +345,31 @@ function generateWeekDateSlots(week) {
       // Selecionar esta data
       dateSlot.classList.add('selected');
       // Atualizar campo hidden
-      document.getElementById('date').value = formattedDate;
-      console.log('🎯 CLIQUE NA DATA - Data selecionada:', formattedDate);
-      // Gerar horários para esta data
+      document.getElementById('date').value = dateKey;
+      console.log('🎯 Data selecionada:', dateKey);
+      // Gerar horários para esta data específica
       generateTimeSlots();
     });
     
     dateSlotsContainer.appendChild(dateSlot);
-  }
-}
-
-// Função para consultar disponibilidade da semana e atualizar interface
-async function checkWeeklyAvailabilityAndUpdate(startDate, endDate) {
-  try {
-    console.log('🎯 Consultando disponibilidade da semana:', startDate, 'a', endDate);
-    
-    const availability = await checkWeeklyAvailability(startDate, endDate);
-    
-    if (availability && availability.weeklyAvailability) {
-      console.log('✅ Dados de disponibilidade recebidos, atualizando interface...');
-      // Atualizar visual dos slots de data baseado na disponibilidade
-      updateDateSlotsAvailability(availability.weeklyAvailability);
-    } else {
-      console.log('⚠️ Nenhuma disponibilidade recebida ou dados inválidos');
-    }
-  } catch (error) {
-    console.error('❌ Erro ao consultar disponibilidade semanal:', error);
-  }
-}
-
-// Função para atualizar visual dos slots baseado na disponibilidade
-function updateDateSlotsAvailability(weeklyAvailability) {
-  const dateSlots = document.querySelectorAll('.date-slot');
-  
-  dateSlots.forEach(slot => {
-    const date = slot.dataset.date;
-    const dayAvailability = weeklyAvailability[date];
-    
-    if (dayAvailability) {
-      if (dayAvailability.available) {
-        slot.classList.add('available');
-        slot.classList.remove('unavailable');
-        slot.title = `Disponível: ${dayAvailability.slots.join(', ')}`;
-      } else {
-        slot.classList.add('unavailable');
-        slot.classList.remove('available');
-        slot.title = 'Sem horários disponíveis';
-      }
-    }
   });
+  
+  console.log(`📅 Total de slots de datas criados: ${dateSlotsContainer.children.length}`);
 }
+
+// Função para mostrar erro de availability
+function showAvailabilityError(message) {
+  const dateSlotsContainer = document.querySelector('.date-slots');
+  dateSlotsContainer.innerHTML = `
+    <div class="availability-error">
+      <span class="error-icon">⚠️</span>
+      <span class="error-message">${message}</span>
+      <button onclick="generateAvailableDates()" class="retry-btn">Tentar Novamente</button>
+    </div>
+  `;
+}
+
+// OBSERVAÇÃO: Funções de semanas removidas - availability agora vem diretamente do Make
 
 // Função para calcular o horário de fim (1 hora depois)
 function getEndTime(startTime) {

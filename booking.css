@@ -876,6 +876,68 @@ h1 {
   }
 }
 
+/* Estilos para novo sistema baseado em availability */
+.loading-message {
+  text-align: center;
+  padding: 20px;
+  color: #63b3ed;
+  font-weight: 500;
+  animation: pulse 2s infinite;
+}
+
+.availability-error {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, 
+    rgba(252, 129, 129, 0.1) 0%, 
+    rgba(252, 129, 129, 0.05) 100%);
+  border: 2px solid rgba(252, 129, 129, 0.4);
+  border-radius: 12px;
+  color: #fc8181;
+  margin: 10px 0;
+}
+
+.availability-error .error-icon {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.availability-error .error-message {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #fc8181, #f687b3);
+  border: 0;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(252, 129, 129, 0.4);
+}
+
+.availability-indicator {
+  font-size: 8px;
+  color: #68d391;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(104, 211, 145, 0.15);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(104, 211, 145, 0.3);
+  margin-top: 2px;
+}
+
 /* Responsividade - Mobile First */
 @media (max-width: 767px) {
   body {
