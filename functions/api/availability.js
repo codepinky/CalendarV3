@@ -565,17 +565,8 @@ function processAgendarMakeData(makeData, startDate, endDate) {
 }
 
 function generateDefaultTimeSlots(date) {
-  const slots = [];
-  const startHour = 13;
-  const endHour = 22;
-  const interval = 1;
-  
-  for (let hour = startHour; hour < endHour; hour += interval) {
-    const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
-    slots.push(timeSlot);
-  }
-  
-  return slots;
+  // CORREÇÃO: Retornar horários alternados padrão
+  return ['13:30', '15:30', '17:30', '19:30', '21:30'];
 }
 
 function generateDynamicTimeSlots(dateStr) {
@@ -583,29 +574,27 @@ function generateDynamicTimeSlots(dateStr) {
     const date = new Date(dateStr);
     const dayOfWeek = date.getDay();
     
+    // CORREÇÃO: Horários específicos alternados conforme solicitado
+    // Segunda a sábado: 13:30, 15:30, 17:30, 19:30, 21:30
     const timeConfig = {
-      0: { start: 14, end: 20, interval: 1 },
-      1: { start: 13, end: 22, interval: 1 },
-      2: { start: 13, end: 22, interval: 1 },
-      3: { start: 13, end: 22, interval: 1 },
-      4: { start: 13, end: 22, interval: 1 },
-      5: { start: 14, end: 21, interval: 1 },
-      6: { start: 14, end: 20, interval: 1 }
+      0: ['14:30', '16:30', '18:30', '20:30'], // Domingo (caso apareça)
+      1: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Segunda
+      2: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Terça
+      3: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Quarta
+      4: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Quinta
+      5: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Sexta
+      6: ['13:30', '15:30', '17:30', '19:30', '21:30']  // Sábado
     };
     
-    const config = timeConfig[dayOfWeek] || timeConfig[1];
-    const slots = [];
+    const slots = timeConfig[dayOfWeek] || timeConfig[1]; // Default para segunda
     
-    for (let hour = config.start; hour < config.end; hour += config.interval) {
-      const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
-      slots.push(timeSlot);
-    }
+    console.log(`🕐 Horários gerados para ${dateStr} (${['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][dayOfWeek]}):`, slots);
     
     return slots;
     
   } catch (error) {
     console.warn('Erro ao gerar horários dinâmicos, usando padrão:', error);
-    return generateDefaultTimeSlots(dateStr);
+    return ['13:30', '15:30', '17:30', '19:30', '21:30']; // Fallback
   }
 }
 

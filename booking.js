@@ -219,19 +219,10 @@ function processCalendarEvents(availabilityData, date) {
   };
 }
 
-// Função para gerar horários padrão de trabalho
+// Função para gerar horários padrão de trabalho (alternados)
 function generateDefaultTimeSlots(date) {
-  const slots = [];
-  const startHour = 13; // 13:30
-  const endHour = 22;   // 22:30
-  const interval = 1;   // 1 hora
-  
-  for (let hour = startHour; hour < endHour; hour += interval) {
-    const timeSlot = `${hour.toString().padStart(2, '0')}:30`;
-    slots.push(timeSlot);
-  }
-  
-  return slots;
+  // CORREÇÃO: Horários alternados conforme solicitado
+  return ['13:30', '15:30', '17:30', '19:30', '21:30'];
 }
 
 // Função para gerar os dias disponíveis baseado no availability do Make
