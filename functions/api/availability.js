@@ -509,7 +509,12 @@ function processAgendarMakeData(makeData, startDate, endDate) {
               hasAvailability: isAvailable,
               eventName: cleanEventName || 'Atender',
               eventStatus: cleanEventStatus || 'Ativo',
-              availableSlots: isAvailable ? generateDynamicTimeSlots(dateKey) : [],
+              availableSlots: isAvailable ? (() => {
+                console.log(`📅 DEBUG: Gerando slots para ${dateKey}, isAvailable=${isAvailable}`);
+                const slots = generateDynamicTimeSlots(dateKey);
+                console.log(`📅 DEBUG: Slots gerados para ${dateKey}:`, slots);
+                return slots;
+              })() : [],
               bookedSlots: [],
               message: isAvailable ? 'Dia com evento "Atender" ativo para agendamento' : 'Evento "Atender" não está ativo',
               eventDetails: {
@@ -571,33 +576,15 @@ function generateDefaultTimeSlots(date) {
 
 function generateDynamicTimeSlots(dateStr) {
   try {
-    // CORREÇÃO: Usar mesma lógica de criação de data para evitar timezone
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    const dayOfWeek = date.getDay();
-    
-    console.log(`🕐 DEBUG Data: ${dateStr} -> Date object: ${date.toString()}, dayOfWeek: ${dayOfWeek}`);
-    
-    // CORREÇÃO: Horários específicos alternados conforme solicitado
-    // Segunda a sábado: 13:30, 15:30, 17:30, 19:30, 21:30
-    const timeConfig = {
-      0: ['14:30', '16:30', '18:30', '20:30'], // Domingo (caso apareça)
-      1: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Segunda
-      2: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Terça
-      3: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Quarta
-      4: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Quinta
-      5: ['13:30', '15:30', '17:30', '19:30', '21:30'], // Sexta
-      6: ['13:30', '15:30', '17:30', '19:30', '21:30']  // Sábado
-    };
-    
-    const slots = timeConfig[dayOfWeek] || timeConfig[1]; // Default para segunda
+    // TESTE: Sempre retornar todos os 5 horários para debug
+    const allSlots = ['13:30', '15:30', '17:30', '19:30', '21:30'];
     
     console.log(`🕐 DEBUG generateDynamicTimeSlots para ${dateStr}:`);
-    console.log(`   - Dia da semana: ${['Dom','Seg','Ter','Qua','Qui','Sex','Sab'][dayOfWeek]} (${dayOfWeek})`);
-    console.log(`   - Horários configurados:`, timeConfig[dayOfWeek]);
-    console.log(`   - Horários retornados:`, slots);
+    console.log(`   - TESTE: Retornando SEMPRE todos os horários:`, allSlots);
+    console.log(`   - Incluindo 13:30? ${allSlots.includes('13:30')}`);
+    console.log(`   - Incluindo 15:30? ${allSlots.includes('15:30')}`);
     
-    return slots;
+    return allSlots;
     
   } catch (error) {
     console.warn('Erro ao gerar horários dinâmicos, usando padrão:', error);
