@@ -409,14 +409,22 @@ function generateDateSlotsFromAvailability(availabilityData) {
       const isCurrentYear = date.getFullYear() === currentYear;
       const hasAvailability = dayData.hasAvailability === true;
       
-      // CORREÇÃO: Mostrar todos os dias com availability, independente do dia da semana
-      const passesFilter = isCurrentMonth && isCurrentYear && hasAvailability;
+      // NOVO: Filtrar dias que já passaram
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Resetar para início do dia
+      const isDateInPast = date < today;
+      
+      // CORREÇÃO: Mostrar apenas dias futuros com availability
+      const passesFilter = isCurrentMonth && isCurrentYear && hasAvailability && !isDateInPast;
       
       console.log(`  - Passou no filtro: ${passesFilter}`);
       console.log(`    - Dia útil válido: ${true}`); // Sempre true agora
       console.log(`    - Mês atual: ${isCurrentMonth}`);
       console.log(`    - Ano atual: ${isCurrentYear}`);
       console.log(`    - Tem availability: ${hasAvailability}`);
+      console.log(`    - Dia já passou: ${isDateInPast}`);
+      console.log(`    - Data atual: ${today.toISOString().split('T')[0]}`);
+      console.log(`    - Data analisada: ${date.toISOString().split('T')[0]}`);
       console.log('---');
       
       return passesFilter;
@@ -428,11 +436,37 @@ function generateDateSlotsFromAvailability(availabilityData) {
       return dateA - dateB;
     });
   
+  // Contar quantos dias foram filtrados por estarem no passado
+  const pastDays = Object.keys(availabilityData).filter(dateKey => {
+    const [year, month, day] = dateKey.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  });
+  
   console.log('📅 Dias disponíveis filtrados e ordenados:', availableDays);
   console.log('📅 Total de dias disponíveis após filtro:', availableDays.length);
+  console.log('📅 Dias filtrados por estarem no passado:', pastDays.length);
+  if (pastDays.length > 0) {
+    console.log('📅 Dias no passado que foram removidos:', pastDays);
+  }
   
   if (availableDays.length === 0) {
-    showAvailabilityError('Nenhum dia disponível encontrado para este mês.');
+    // Verificar se foi porque todos os dias passaram
+    const allDaysInPast = Object.keys(availabilityData).filter(dateKey => {
+      const [year, month, day] = dateKey.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date < today;
+    });
+    
+    if (allDaysInPast.length > 0) {
+      showAvailabilityError('Todos os dias disponíveis já passaram. Aguarde novos horários para o próximo mês.');
+    } else {
+      showAvailabilityError('Nenhum dia disponível encontrado para este mês.');
+    }
     return;
   }
   
