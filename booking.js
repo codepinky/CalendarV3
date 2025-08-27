@@ -241,11 +241,10 @@ function generateFriendlyNoSlotsMessage(availability, selectedDate) {
     if (isToday) {
       message = `
         <div class="${iconClass} fully-booked-today">
-          <div class="message-icon">😊</div>
-          <div class="message-title">Hoje está bem movimentado!</div>
+          <div class="message-icon">😍</div>
+          <div class="message-title">Meus horários foram preenchidos</div>
           <div class="message-content">
-            Todos os ${occupiedSlots} horários de hoje (${formattedDate}) já foram agendados.<br>
-            Que tal escolher outro dia?
+            Você pode ver os próximos dias 😍
           </div>
         </div>
       `;
